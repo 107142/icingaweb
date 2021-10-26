@@ -1,0 +1,81 @@
+#!/bin/bash
+
+. /opt/helpers
+
+ICINGAWEB2_GRAFANA=${ICINGAWEB2_GRAFANA:-false}
+
+# Grafana writer
+if evaluate_boolean "${ICINGAWEB2_GRAFANA}"; then
+	echo "Grafana: Enabling Icingaweb2 grafana module"
+
+	ICINGAWEB2_GRAFANA_CONFIG_PATH=/etc/icingaweb2/modules/grafana
+	ICINGAWEB2_GRAFANA_CONFIG=${ICINGAWEB2_GRAFANA_CONFIG_PATH}/config.ini
+
+	icingacli module enable grafana
+
+	echo "Grafana: Configure"
+	mkdir -p ${ICINGAWEB2_GRAFANA_CONFIG_PATH}
+	touch ${ICINGAWEB2_GRAFANA_CONFIG}
+
+	ICINGAWEB2_GRAFANA_ACCESSMODE=${ICINGAWEB2_GRAFANA_ACCESSMODE:-indirectproxy}
+
+	ini_set ${ICINGAWEB2_GRAFANA_CONFIG} grafana version		\"${ICINGAWEB2_GRAFANA_VERSION:-1}\"
+	ini_set ${ICINGAWEB2_GRAFANA_CONFIG} grafana host		\"${ICINGAWEB2_GRAFANA_HOST:-localhost}\"
+	ini_set ${ICINGAWEB2_GRAFANA_CONFIG} grafana protocol		\"${ICINGAWEB2_GRAFANA_PROTOCOL:-https}\"
+	ini_set ${ICINGAWEB2_GRAFANA_CONFIG} grafana ssl_verifypeer	\"${ICINGAWEB2_GRAFANA_SSLVERIFYPEER:-0}\"
+	ini_set ${ICINGAWEB2_GRAFANA_CONFIG} grafana ssl_verifyhost	\"${ICINGAWEB2_GRAFANA_SSLVERIFYHOST:-0}\"
+	ini_set ${ICINGAWEB2_GRAFANA_CONFIG} grafana timerangeAll	\"${ICINGAWEB2_GRAFANA_TIMERANGEALL:-24h}\"
+	ini_set ${ICINGAWEB2_GRAFANA_CONFIG} grafana defaultdashboard	\"${ICINGAWEB2_GRAFANA_DEFAULTDASHBOARD:-X}\"
+	ini_set ${ICINGAWEB2_GRAFANA_CONFIG} grafana defaultdashboarduid	\"${ICINGAWEB2_GRAFANA_DEFAULTDASHBOARDUID:-X}\"
+	ini_set ${ICINGAWEB2_GRAFANA_CONFIG} grafana defaultdashboardpanelid	\"${ICINGAWEB2_GRAFANA_DEFAULTDASHBOARDPANELID:-1}\"
+	ini_set ${ICINGAWEB2_GRAFANA_CONFIG} grafana defaultdashboardstore	\"${ICINGAWEB2_GRAFANA_DEFAULTDASHBOARDSTORE:-database}\"
+	ini_set ${ICINGAWEB2_GRAFANA_CONFIG} grafana defaultorgid	\"${ICINGAWEB2_GRAFANA_DEFAULTORGID:-1}\"
+	ini_set ${ICINGAWEB2_GRAFANA_CONFIG} grafana shadows		\"${ICINGAWEB2_GRAFANA_SHADOWS:-1}\"
+	ini_set ${ICINGAWEB2_GRAFANA_CONFIG} grafana theme		\"${ICINGAWEB2_GRAFANA_THEME:-light}\"
+	ini_set ${ICINGAWEB2_GRAFANA_CONFIG} grafana datasource		\"${ICINGAWEB2_GRAFANA_DATASOURCE:-influxdb}\"
+	ini_set ${ICINGAWEB2_GRAFANA_CONFIG} grafana accessmode		\"${ICINGAWEB2_GRAFANA_ACCESSMODE}\"
+	ini_set ${ICINGAWEB2_GRAFANA_CONFIG} grafana height		\"${ICINGAWEB2_GRAFANA_HEIGHT:-280}\"
+	ini_set ${ICINGAWEB2_GRAFANA_CONFIG} grafana width		\"${ICINGAWEB2_GRAFANA_WIDTH:-640}\"
+	ini_set ${ICINGAWEB2_GRAFANA_CONFIG} grafana enableLink		\"${ICINGAWEB2_GRAFANA_ENABLELINK:-no}\"
+	ini_set ${ICINGAWEB2_GRAFANA_CONFIG} grafana debug		\"${ICINGAWEB2_GRAFANA_DEBUG:-0}\"
+	ini_set ${ICINGAWEB2_GRAFANA_CONFIG} grafana timerange		\"${ICINGAWEB2_GRAFANA_TIMERANGE:-24h}\"
+	ini_set ${ICINGAWEB2_GRAFANA_CONFIG} grafana usepublic		\"${ICINGAWEB2_GRAFANA_USEPUBLIC:-no}\"
+	ini_set ${ICINGAWEB2_GRAFANA_CONFIG} grafana custvardisable	\"${ICINGAWEB2_GRAFANA_CUSTVARDISABLE:-grafana_graph_disable}\"
+	ini_set ${ICINGAWEB2_GRAFANA_CONFIG} grafana custvarconfig	\"${ICINGAWEB2_GRAFANA_CUSTVARCONFIG:-grafana_graph_config}\"
+
+	if [ "X${ICINGAWEB2_GRAFANA_USEPUBLIC:-no}" = "Xyes" ]; then
+		ini_set ${ICINGAWEB2_GRAFANA_CONFIG} grafana publichost		\"${ICINGAWEB2_GRAFANA_PUBLICHOST}\"
+		ini_set ${ICINGAWEB2_GRAFANA_CONFIG} grafana publicprotocol	\"${ICINGAWEB2_GRAFANA_PUBLICPROTOCOL}\"
+	fi
+
+	if [ "X${ICINGAWEB2_GRAFANA_ENABLELINK:-no}" = "Xyes" ]; then
+		ini_set ${ICINGAWEB2_GRAFANA_CONFIG} grafana enableLink         \"${ICINGAWEB2_GRAFANA_ENABLELINK}\"
+	fi
+
+	if [ "X${ICINGAWEB2_GRAFANA_ACCESSMODE}" = "Xproxy" -o "X${ICINGAWEB2_GRAFANA_ACCESSMODE}" = "Xindirectproxy" ]; then
+		ini_set ${ICINGAWEB2_GRAFANA_CONFIG} grafana authentication	\"${ICINGAWEB2_GRAFANA_PROXY_AUTHENTICATION:-anon}\"
+
+		if [ "X${ICINGAWEB2_GRAFANA_PROXY_AUTHENTICATION}" = "Xbasic" ]; then
+			ini_set ${ICINGAWEB2_GRAFANA_CONFIG} grafana username	\"${ICINGAWEB2_GRAFANA_PROXY_USERNAME}\"
+			ini_set ${ICINGAWEB2_GRAFANA_CONFIG} grafana password	\"${ICINGAWEB2_GRAFANA_PROXY_PASSWORD}\"
+
+			elif [ "X${ICINGAWEB2_GRAFANA_PROXY_AUTHENTICATION}" = "Xtoken" ]; then
+				ini_set ${ICINGAWEB2_GRAFANA_CONFIG} grafana apitoken	\"${ICINGAWEB2_GRAFANA_PROXY_APITOKEN}\"
+		fi
+
+		if [ "X${ICINGAWEB2_GRAFANA_ACCESSMODE}" = "Xindirectproxy" ]; then
+			ini_set ${ICINGAWEB2_GRAFANA_CONFIG} grafana indirectproxy	\"${ICINGAWEB2_GRAFANA_INDIRECTPROXYREFRESH:-yes}\"
+		fi
+
+		if [ "X${ICINGAWEB2_GRAFANA_ACCESSMODE}" = "Xproxy" ]; then
+			ini_set ${ICINGAWEB2_GRAFANA_CONFIG} grafana timeout	\"${ICINGAWEB2_GRAFANA_PROXY_TIMEOUT:-5}\"
+		fi
+	else
+		ini_set ${ICINGAWEB2_GRAFANA_CONFIG} grafana directrefresh	\"${ICINGAWEB2_GRAFANA_DIRECTREFRESH:-yes}\"
+	fi
+
+	echo -e "Grafana: Finished configuration\n"
+else
+	# Actively disable grafana, to not hit any weird bugs
+	icingacli module disable grafana || true
+fi

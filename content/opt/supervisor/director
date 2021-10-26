@@ -1,0 +1,14 @@
+#!/bin/bash
+
+. /opt/helpers
+
+# Kickstart is only possible after icinga2 start
+if evaluate_boolean "${ICINGAWEB2_FEATURE_DIRECTOR}"; then
+	if evaluate_boolean "${ICINGAWEB2_FEATURE_DIRECTOR_KICKSTART}"; then
+		until pids=$(pidof -s apache2) ; do sleep 10 ; done
+		icingacli director kickstart run
+	fi
+		sleep 20 && exec /usr/bin/icingacli director daemon run
+else
+		sleep 2 && exit 0
+fi

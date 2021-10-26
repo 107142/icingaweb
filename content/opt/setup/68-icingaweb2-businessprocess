@@ -1,0 +1,15 @@
+#!/bin/bash
+
+. /opt/helpers
+
+ICINGAWEB2_BUSSINESS=${ICINGAWEB2_BUSSINESS:-false}
+
+# Bussinessprocess writer
+if evaluate_boolean "${ICINGAWEB2_BUSSINESS}"; then
+	echo "BP: Enabling Icingaweb2 bussinessprocess module"
+
+	icingacli module enable bussinessprocess
+else
+	# Actively disable businessprocess, to not hit any weird bugs
+	icingacli module disable bussinessprocess || true
+fi

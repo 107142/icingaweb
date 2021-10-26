@@ -1,0 +1,54 @@
+#!/bin/bash
+
+. /opt/helpers
+
+APACHE2_OIDC_ENABLE=${APACHE2_OIDC_ENABLE=:-"false"}
+
+if evaluate_boolean "${APACHE2_OIDC_ENABLE}"; then
+	echo "Apache2: Setting up OpenID Connect"
+
+	cat > /etc/apache2/conf-available/oidc-auth.conf <<-END
+	OIDCProviderMetadataRefreshInterval ${APACHE2_OIDC_METADATA_REFRESH:-3600}
+	OIDCProviderMetadataURL $APACHE2_OIDC_METADATA
+	OIDCClientID $APACHE2_OIDC_CLIENTID
+	OIDCClientSecret $APACHE2_OIDC_CLIENTSECRET
+	OIDCScope "${APACHE2_OIDC_SCOPE:-openid profile}"
+	OIDCRedirectURI ${APACHE2_OIDC_REDIRECT_URI:-/callback}
+	OIDCRemoteUserClaim $APACHE2_OIDC_REMOTE_USER_CLAIM
+	OIDCCryptoPassphrase $APACHE2_OIDC_PASSPHRASE
+	OIDCSSLValidateServer ${APACHE2_OIDC_SSL_VALIDATE_SERVER:-On}
+	OIDCOAuthSSLValidateServer  ${APACHE2_OIDC_AUTHSSL_VALIDATE_SERVER:-On}
+	OIDCInfoHook ${APACHE2_OIDC_INFOHOOK:-iat access_token access_token_expires id_token userinfo refresh_token session}
+	OIDCCookiePath ${APACHE2_OIDC_COOKIE_PATH:-/}
+	OIDCPassRefreshToken ${APACHE2_OIDC_REFRESH_TOKEN:-On}
+	OIDCSessionInactivityTimeout ${APACHE2_OIDC_SESSION_INACTIVITY_TIMEOUT:-86400}
+	OIDCSessionType ${APACHE2_OIDC_SESSION_TYPE:-server-cache}
+	OIDCSessionMaxDuration ${APACHE2_OIDC_SESSION_MAX_DURATION:-86400}
+	OIDCCacheEncrypt ${APACHE2_OIDC_CACHE_ENCRYPT:-Off}
+	OIDCStateMaxNumberOfCookies 10 true
+
+	<Location /icingaweb2/authentication/logout>
+		Redirect https://%{HTTP_HOST}$APACHE2_OIDC_REDIRECT_URI?logout=https://%{HTTP_HOST}
+	</Location>
+
+	<Location /callback>
+		Header always set Cache-Control "no-cache, no-store, max-age=0, must-revalidate"
+		Header always set Pragma no-cache
+		Header always set Expires 0
+		AuthType openid-connect
+		Require valid-user
+	</Location>
+
+	<Location ~ '^((?!/server-status).)*$'>
+		AuthType openid-connect
+		Require valid-user
+	</Location>
+	END
+
+	a2enmod -q headers auth_openidc >/dev/null 2>&1
+	echo -e "Apache2: Enabled OpenID Connect\n"
+else
+	echo '' > /etc/apache2/conf-available/oidc-auth.conf
+
+	a2dismod -q auth_openidc >/dev/null 2>&1 || true
+fi

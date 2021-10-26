@@ -1,0 +1,161 @@
+#!/bin/bash
+
+. /opt/helpers
+
+ICINGAWEB2_CONFIG_PATH=/etc/icingaweb2
+ICINGAWEB2_CONFIG=${ICINGAWEB2_CONFIG_PATH}/config.ini
+ICINGAWEB2_IDO_PGSQL_HOST=${ICINGAWEB2_IDO_PGSQL_HOST:-${DEFAULT_PGSQL_HOST}}
+ICINGAWEB2_IDO_PGSQL_PORT=${ICINGAWEB2_IDO_PGSQL_PORT:-${DEFAULT_PGSQL_PORT}}
+ICINGAWEB2_IDO_PGSQL_USER=${ICINGAWEB2_IDO_PGSQL_USER:-${DEFAULT_PGSQL_USER}}
+ICINGAWEB2_IDO_PGSQL_PASS=${ICINGAWEB2_IDO_PGSQL_PASS:-${IDO_PASSWORD:-${DEFAULT_PGSQL_PASS}}}
+ICINGAWEB2_IDO_PGSQL_DATA=${ICINGAWEB2_IDO_PGSQL_DATA:-icinga2_ido}
+ICINGAWEB2_PGSQL_HOST=${ICINGAWEB2_PGSQL_HOST:-${DEFAULT_PGSQL_HOST}}
+ICINGAWEB2_PGSQL_PORT=${ICINGAWEB2_PGSQL_PORT:-${DEFAULT_PGSQL_PORT}}
+ICINGAWEB2_PGSQL_USER=${ICINGAWEB2_PGSQL_USER:-${DEFAULT_PGSQL_USER}}
+ICINGAWEB2_PGSQL_PASS=${ICINGAWEB2_PGSQL_PASS:-${ICINGAWEB2_PASSWORD:-${DEFAULT_PGSQL_PASS}}}
+ICINGAWEB2_PGSQL_DATA=${ICINGAWEB2_PGSQL_DATA:-icingaweb2}
+
+echo "Icingaweb2: Setting up Icingaweb2"
+pgsql_wait \
+	"${ICINGAWEB2_PGSQL_HOST}" \
+	"${ICINGAWEB2_PGSQL_PORT}" \
+	"${PGSQL_ROOT_USER}"
+
+if [ ! "$(ls -A /etc/icingaweb2)" ]; then
+	echo "Icingaweb2: Copying fresh config-files for /etc/icingaweb2"
+	cp -Ra /etc/icingaweb2.dist/* /etc/icingaweb2/
+	[ -d /etc/icingaweb2/userModules ] || mkdir /etc/icingaweb2/userModules
+else
+	[ -e /etc/icingaweb2.dist ] && rm -rf /etc/icingaweb2.dist
+fi
+
+# Chown directories and files that might be coming from volumes
+# continue on errors as files might mounted read-only
+chmod 2770 /etc/icingaweb2 >/dev/null 2>&1 || true
+chown -R www-data:icingaweb2 /etc/icingaweb2 >/dev/null 2>&1 || true
+
+chmod o-r ${ICINGAWEB2_RESOURCE_CONFIG}
+
+mkdir -p /var/log/icingaweb2
+chown -R www-data:adm /var/log/icingaweb2
+
+mkdir -p /var/lib/php/sessions
+chown -R www-data:www-data /var/lib/php/sessions
+
+# enable modules
+icingacli module enable monitoring
+
+# Create PGSQL database
+if [ -n "${PGSQL_ROOT_PASS:-}" ]; then
+	echo "Icingaweb2: Setting up database."
+	pgsql_conn "${ICINGAWEB2_PGSQL_HOST}" \
+		"${ICINGAWEB2_PGSQL_PORT}" \
+		"${PGSQL_ROOT_USER}" \
+		"${PGSQL_ROOT_PASS}" <<-EOF
+		\x
+		DO \$\$
+		BEGIN
+		SET client_min_messages to 'WARNING';
+		CREATE ROLE ${ICINGAWEB2_PGSQL_USER} WITH LOGIN PASSWORD '${ICINGAWEB2_PGSQL_PASS}';
+		EXCEPTION WHEN DUPLICATE_OBJECT THEN
+		RAISE NOTICE 'not creating role ${ICINGAWEB2_PGSQL_USER} -- it already exists';
+		END
+		\$\$;
+	EOF
+	psql -q "postgresql://${PGSQL_ROOT_USER}:${PGSQL_ROOT_PASS}@${ICINGAWEB2_PGSQL_HOST}:${ICINGAWEB2_PGSQL_PORT}" \
+	-tc "SELECT 1 FROM pg_database WHERE datname = '${ICINGAWEB2_PGSQL_DATA}'" | grep 1 \
+	|| pgsql_conn "${ICINGAWEB2_PGSQL_HOST}" \
+		"${ICINGAWEB2_PGSQL_PORT}" \
+		"${PGSQL_ROOT_USER}" \
+		"${PGSQL_ROOT_PASS}" <<-EOF
+		SET client_min_messages to 'WARNING';
+		CREATE DATABASE ${ICINGAWEB2_PGSQL_DATA} ENCODING UTF8 OWNER ${ICINGAWEB2_PGSQL_USER};
+		GRANT ALL PRIVILEGES ON DATABASE ${ICINGAWEB2_PGSQL_DATA} TO ${ICINGAWEB2_PGSQL_USER};
+		GRANT USAGE ON SCHEMA public TO ${ICINGAWEB2_PGSQL_USER};
+		GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO ${ICINGAWEB2_PGSQL_USER};
+		GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO ${ICINGAWEB2_PGSQL_USER};
+	EOF
+fi
+
+echo "Icingaweb2: Checking database connection ..."
+pgsql_cred "${ICINGAWEB2_PGSQL_HOST}" \
+	"${ICINGAWEB2_PGSQL_PORT}" \
+	"${ICINGAWEB2_PGSQL_USER}" \
+	"${ICINGAWEB2_PGSQL_PASS}" \
+	"${ICINGAWEB2_PGSQL_DATA}"
+
+echo "Icingaweb2: Importing schema"
+pgsql_conn "${ICINGAWEB2_PGSQL_HOST}" \
+	"${ICINGAWEB2_PGSQL_PORT}" \
+	"${ICINGAWEB2_PGSQL_USER}" \
+	"${ICINGAWEB2_PGSQL_PASS}" \
+	"${ICINGAWEB2_PGSQL_DATA}" \
+	< /usr/share/icingaweb2/etc/schema/pgsql.schema.sql \
+	>> /tmp/pgsql-schema.log \
+	2>&1 || true
+
+echo "Icingaweb2: Configuring IcingaWeb resources"
+
+ini_set ${ICINGAWEB2_CONFIG} logging log \"php\"
+ini_set ${ICINGAWEB2_CONFIG} logging level \"${ICINGAWEB2_LOGGING_LEVEL:-ERROR}\"
+ini_set ${ICINGAWEB2_CONFIG} logging application \"icingaweb2\"
+
+ini_set ${ICINGAWEB2_RESOURCE_CONFIG} icingaweb2 type       \"db\"
+ini_set ${ICINGAWEB2_RESOURCE_CONFIG} icingaweb2 db         \"pgsql\"
+ini_set ${ICINGAWEB2_RESOURCE_CONFIG} icingaweb2 host       \"${ICINGAWEB2_PGSQL_HOST}\"
+ini_set ${ICINGAWEB2_RESOURCE_CONFIG} icingaweb2 port       \"${ICINGAWEB2_PGSQL_PORT}\"
+ini_set ${ICINGAWEB2_RESOURCE_CONFIG} icingaweb2 dbname     \"${ICINGAWEB2_PGSQL_DATA}\"
+ini_set ${ICINGAWEB2_RESOURCE_CONFIG} icingaweb2 username   \"${ICINGAWEB2_PGSQL_USER}\"
+ini_set ${ICINGAWEB2_RESOURCE_CONFIG} icingaweb2 password   \"${ICINGAWEB2_PGSQL_PASS}\"
+ini_set ${ICINGAWEB2_RESOURCE_CONFIG} icingaweb2 prefix     \"icingaweb_\"
+ini_set ${ICINGAWEB2_RESOURCE_CONFIG} icingaweb2 persistent \"${ICINGAWEB2_PGSQL_PERSISTENT:-0}\"
+ini_set ${ICINGAWEB2_RESOURCE_CONFIG} icingaweb2 use_ssl    \"${ICINGAWEB2_PGSQL_SSL:-0}\"
+ini_set ${ICINGAWEB2_RESOURCE_CONFIG} icingaweb2 charset    \"${ICINGAWEB2_PGSQL_CHARSET:-utf8}\"
+ini_set ${ICINGAWEB2_RESOURCE_CONFIG} icingaweb2 ssl_key    \"${ICINGAWEB2_PGSQL_SSL_KEY}\"
+ini_set ${ICINGAWEB2_RESOURCE_CONFIG} icingaweb2 ssl_cert   \"${ICINGAWEB2_PGSQL_SSL_CERT}\"
+ini_set ${ICINGAWEB2_RESOURCE_CONFIG} icingaweb2 ssl_ca     \"${ICINGAWEB2_PGSQL_SSL_CA:-/etc/ssl/certs/ca-certificates.crt}\"
+
+ini_set ${ICINGAWEB2_RESOURCE_CONFIG} icinga2_ido type       \"db\"
+ini_set ${ICINGAWEB2_RESOURCE_CONFIG} icinga2_ido db         \"pgsql\"
+ini_set ${ICINGAWEB2_RESOURCE_CONFIG} icinga2_ido host       \"${ICINGAWEB2_IDO_PGSQL_HOST}\"
+ini_set ${ICINGAWEB2_RESOURCE_CONFIG} icinga2_ido port       \"${ICINGAWEB2_IDO_PGSQL_PORT}\"
+ini_set ${ICINGAWEB2_RESOURCE_CONFIG} icinga2_ido dbname     \"${ICINGAWEB2_IDO_PGSQL_DATA}\"
+ini_set ${ICINGAWEB2_RESOURCE_CONFIG} icinga2_ido username   \"${ICINGAWEB2_IDO_PGSQL_USER}\"
+ini_set ${ICINGAWEB2_RESOURCE_CONFIG} icinga2_ido password   \"${ICINGAWEB2_IDO_PGSQL_PASS}\"
+ini_set ${ICINGAWEB2_RESOURCE_CONFIG} icinga2_ido persistent \"${ICINGAWEB2_IDO_PGSQL_PERSISTENT:-0}\"
+ini_set ${ICINGAWEB2_RESOURCE_CONFIG} icinga2_ido use_ssl    \"${ICINGAWEB2_IDO_PGSQL_SSL:-0}\"
+ini_set ${ICINGAWEB2_RESOURCE_CONFIG} icinga2_ido ssl_key    \"${ICINGAWEB2_IDO_PGSQL_SSL_KEY}\"
+ini_set ${ICINGAWEB2_RESOURCE_CONFIG} icinga2_ido ssl_cert   \"${ICINGAWEB2_IDO_PGSQL_SSL_CERT}\"
+ini_set ${ICINGAWEB2_RESOURCE_CONFIG} icinga2_ido ssl_ca     \"${ICINGAWEB2_IDO_PGSQL_SSL_CA:-/etc/ssl/certs/ca-certificates.crt}\"
+ini_set ${ICINGAWEB2_RESOURCE_CONFIG} icinga2_ido charset    \"${ICINGAWEB2_IDO_PGSQL_CHARSET:-utf8}\"
+
+ini_set /etc/icingaweb2/modules/monitoring/commandtransports.ini icinga2 transport \"api\"
+ini_set /etc/icingaweb2/modules/monitoring/commandtransports.ini icinga2 host      \"${ICINGAWEB2_API_TRANSPORT_HOST}\"
+ini_set /etc/icingaweb2/modules/monitoring/commandtransports.ini icinga2 port      \"${ICINGAWEB2_API_TRANSPORT_PORT}\"
+ini_set /etc/icingaweb2/modules/monitoring/commandtransports.ini icinga2 username  \"${ICINGAWEB2_API_TRANSPORT_USER}\"
+ini_set /etc/icingaweb2/modules/monitoring/commandtransports.ini icinga2 password  \"${ICINGAWEB2_API_TRANSPORT_PASS}\"
+
+echo "Icingaweb2: Setting up admin account/s"
+
+# Write Icingaweb2 user and password to installation
+[ "x${ICINGAWEB2_ADMINS}" != "x" ] && export ICINGAWEB2_ADMINS=",${ICINGAWEB2_ADMINS}"
+ini_set /etc/icingaweb2/roles.ini Administrators users \"${ICINGAWEB2_ADMIN_USER}${ICINGAWEB2_ADMINS}\"
+
+pgsql_conn "${ICINGAWEB2_PGSQL_HOST}" \
+	"${ICINGAWEB2_PGSQL_PORT}" \
+	"${ICINGAWEB2_PGSQL_USER}" \
+	"${ICINGAWEB2_PGSQL_PASS}" \
+	"${ICINGAWEB2_PGSQL_DATA}" <<-EOF
+	\x
+	DO \$\$
+	BEGIN
+	  SET client_min_messages to 'WARNING';
+	  INSERT INTO icingaweb_user (name, active, password_hash)
+	  VALUES ('${ICINGAWEB2_ADMIN_USER}', 1, '${ICINGAWEB2_ADMIN_PASS_HASH}')
+	  ON CONFLICT (name) DO
+	  UPDATE SET name = EXCLUDED.name, password_hash = EXCLUDED.password_hash;
+	END
+	\$\$;
+EOF
+
+echo -e "Icingaweb2: Finished successfully\n"

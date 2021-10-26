@@ -1,0 +1,19 @@
+#!/bin/bash
+
+. /opt/helpers
+
+ICINGAWEB2_FEATURE_GRAPHITE=${ICINGAWEB2_FEATURE_GRAPHITE:-false}
+
+# Graphite writer
+if evaluate_boolean "${ICINGAWEB2_FEATURE_GRAPHITE}"; then
+	echo "Graphite: Enabling Icingaweb2 graphite module"
+	icingacli module enable graphite
+
+	[ -e /etc/icingaweb2/modules/graphite ] || cp -r /usr/local/share/icingaweb2/modules/graphite/templates /etc/icingaweb2/modules/graphite
+
+	ini_set /etc/icingaweb2/modules/graphite/config.ini graphite url \"${ICINGAWEB2_FEATURE_GRAPHITE_URL:-"http://graphite"}\"
+	echo -e "Graphite: Finished configuration\n"
+else
+	# Actively disable graphite, to not hit any weird bugs
+	icingacli module disable graphite || true
+fi

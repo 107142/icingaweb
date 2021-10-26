@@ -1,0 +1,58 @@
+#!/bin/bash
+
+. /opt/helpers
+
+set -eo pipefail
+
+if evaluate_boolean "${ICINGAWEB2_DOCKER_DEBUG}"; then
+	set -x
+fi
+
+ISSET_ICINGAWEB2_ADMIN_PASS=${ICINGAWEB2_ADMIN_PASS:+<set via env variable>}
+ISSET_ICINGAWEB2_API_TRANSPORT_PASS=${ICINGAWEB2_API_TRANSPORT_PASS:+<set via env variable>}
+ISSET_DEFAULT_PGSQL_PASS=${DEFAULT_PGSQL_PASS:+<set via env variable>}
+
+export ICINGAWEB2_ADMIN_USER=${ICINGAWEB2_ADMIN_USER:-"admin"}
+export ICINGAWEB2_ADMIN_PASS=${ICINGAWEB2_ADMIN_PASS:-"$(openssl rand -base64 12)"}
+export ICINGAWEB2_ADMIN_PASS_HASH=$(openssl passwd -1 "${ICINGAWEB2_ADMIN_PASS}")
+
+export PHP_VERSION=$(php -r 'echo PHP_MAJOR_VERSION . "." . PHP_MINOR_VERSION . "\n";')
+export ICINGAWEB2_FEATURE_PHP_FPM=${ICINGAWEB2_FEATURE_PHP_FPM:-true}
+
+export ICINGAWEB2_FEATURE_DIRECTOR=${ICINGAWEB2_FEATURE_DIRECTOR:-true}
+export ICINGAWEB2_FEATURE_DIRECTOR_KICKSTART=${ICINGAWEB2_FEATURE_DIRECTOR_KICKSTART:-true}
+
+export ICINGAWEB2_RESOURCE_CONFIG=/etc/icingaweb2/resources.ini
+
+export ICINGAWEB2_API_TRANSPORT_HOST=${ICINGAWEB2_API_TRANSPORT_HOST:-icinga2}
+export ICINGAWEB2_API_TRANSPORT_PORT=${ICINGAWEB2_API_TRANSPORT_PORT:-5665}
+export ICINGAWEB2_API_TRANSPORT_USER=${ICINGAWEB2_API_TRANSPORT_USER:-"icinga2-transport"}
+export ICINGAWEB2_API_TRANSPORT_PASS=${ICINGAWEB2_API_TRANSPORT_PASS:-"icingatransport"}
+
+export DEFAULT_PGSQL_HOST=${DEFAULT_PGSQL_HOST:-pgsql}
+export DEFAULT_PGSQL_PORT=${DEFAULT_PGSQL_PORT:-5432}
+export DEFAULT_PGSQL_USER=${DEFAULT_PGSQL_USER:-icinga2}
+export DEFAULT_PGSQL_PASS=${DEFAULT_PGSQL_PASS:-$(openssl rand -base64 12)}
+
+export PGSQL_ROOT_USER=${PGSQL_ROOT_USER:-postgres}
+export PGSQL_ROOT_PASS=${PGSQL_ROOT_PASS:-${PGSQL_ROOT_PASSWORD}}
+
+echo -e "INITIALIZING ICINGAWEB DOCKER CONTAINER\n"
+
+run-parts --lsbsysinit --exit-on-error -- /opt/setup
+
+cat <<-END
+===================================================================
+
+Running IcingaWeb on $(hostname)
+
+Icinga2 transport endpoint credentials: ${ICINGAWEB2_API_TRANSPORT_USER}:${ISSET_ICINGAWEB2_API_TRANSPORT_PASS:-$ICINGAWEB2_API_TRANSPORT_PASS}
+
+Icinga Web 2 (/icingaweb2) default credentials: ${ICINGAWEB2_ADMIN_USER}:${ISSET_ICINGAWEB2_ADMIN_PASS:-$ICINGAWEB2_ADMIN_PASS}
+
+PostgreSQL default credentials: ${DEFAULT_PGSQL_USER}:${ISSET_DEFAULT_PGSQL_PASS:-$DEFAULT_PGSQL_PASS}
+
+===================================================================
+END
+
+exec "$@"

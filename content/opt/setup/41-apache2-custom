@@ -1,0 +1,15 @@
+#!/bin/bash
+
+. /opt/helpers
+
+# Enable custom virtual hosts
+if [ -f /etc/apache2/sites-available/custom_vhosts.conf ] ; then
+	echo "Apache2: Enabling custom virtual hosts"
+	a2ensite -q custom_vhosts
+	if apachectl -t; then
+		echo -e "Apache2: Custom vHost enabled\n"
+	else
+		echo -e "Apache2: Configuration error\n"
+		a2dissite -q custom_vhosts
+	fi
+fi

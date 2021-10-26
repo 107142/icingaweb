@@ -1,0 +1,61 @@
+#!/bin/bash
+
+. /opt/helpers
+
+APACHE2_HTTP=${APACHE2_HTTP:-REDIRECT}
+
+echo "Apache2: Setting up Apache"
+
+mkdir -p /var/log/apache2
+chown -R www-data:adm /var/log/apache2
+
+grep -q ServerName /etc/apache2/apache2.conf || echo ServerName ${APACHE2_SERVER_NAME:-icingaweb2} >> /etc/apache2/apache2.conf
+
+cat > /etc/apache2/conf-available/fqdn.conf <<-END
+ServerName ${APACHE2_SERVER_NAME:-icingaweb2}
+ServerAlias ${APACHE2_SERVER_ALIAS:-icingaweb}
+ServerAdmin ${APACHE2_SERVER_ADMIN:-webmaster@localhost}
+END
+
+# Enable Brotli
+a2dismod -q -f deflate >/dev/null 2>&1
+a2enmod -q rewrite brotli filter setenvif headers >/dev/null 2>&1
+a2enconf -q brotli >/dev/null 2>&1
+
+# Enable TLS support if cert directory is mounted
+if [ -d /etc/apache2/ssl/icinga ] || [ -d /etc/letsencrypt ]; then
+	echo "Apache2: Enabling TLS"
+	# If using Let's Encrypt
+	if [ -d /etc/letsencrypt ]; then
+		sed -i -e 's/\/etc\/apache2\/ssl\/icinga\/icinga2.chain/\/etc\/letsencrypt\/live\/'"$(basename `ls -1d /etc/letsencrypt/live/*/`)\/fullchain.pem/g" /etc/apache2/sites-available/icingaweb2-ssl.conf
+		sed -i -e 's/\/etc\/apache2\/ssl\/icinga\/icinga2.key/\/etc\/letsencrypt\/live\/'"$(basename `ls -1d /etc/letsencrypt/live/*/`)\/privkey.pem/g" /etc/apache2/sites-available/icingaweb2-ssl.conf
+	fi
+	a2enmod -q ssl >/dev/null 2>&1
+	a2enmod -q cache >/dev/null 2>&1
+	a2ensite -q icingaweb2-ssl >/dev/null 2>&1
+
+	if [ -n "${APACHE2_CSP:-}" ]; then
+		cat > /etc/apache2/conf-available/icinga_csp.conf <<-END
+		Header set Content-Security-Policy ${APACHE2_CSP}
+		END
+	echo "Apache2: CSP enabled"
+	fi
+
+	case "${APACHE2_HTTP}" in
+		BOTH)
+			a2ensite -q 000-default >/dev/null 2>&1
+			a2dissite -q icingaweb2-ssl-redirect >/dev/null 2>&1
+			;;
+		REDIRECT)
+			a2dissite -q 000-default >/dev/null 2>&1
+			a2ensite -q icingaweb2-ssl-redirect >/dev/null 2>&1
+			;;
+	esac
+
+else
+	echo "Apache2: Running plain HTTP"
+	a2ensite -q 000-default >/dev/null 2>&1
+	a2dissite -q icingaweb2-ssl >/dev/null 2>&1
+	a2dissite -q icingaweb2-ssl-redirect >/dev/null 2>&1
+fi
+echo -e "Apache2: Configuration finished\n"

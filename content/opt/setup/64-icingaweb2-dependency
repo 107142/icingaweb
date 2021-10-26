@@ -1,0 +1,124 @@
+#!/bin/bash
+
+. /opt/helpers
+
+ICINGAWEB2_DEPENDENCY=${ICINGAWEB2_DEPENDENCY:-true}
+
+if evaluate_boolean "${ICINGAWEB2_DEPENDENCY}"; then
+
+	echo "Dependency: Enabling Icingaweb2 dependency_plugin module"
+
+	ICINGAWEB2_DEPENDENCY_CONFIG_PATH=/etc/icingaweb2/modules/dependency_plugin
+	ICINGAWEB2_DEPENDENCY_CONFIG=${ICINGAWEB2_DEPENDENCY_CONFIG_PATH}/config.ini
+	ICINGAWEB2_DEPENDENCY_PGSQL_HOST=${ICINGAWEB2_DEPENDENCY_PGSQL_HOST:-${DEFAULT_PGSQL_HOST}}
+	ICINGAWEB2_DEPENDENCY_PGSQL_PORT=${ICINGAWEB2_DEPENDENCY_PGSQL_PORT:-${DEFAULT_PGSQL_PORT}}
+	ICINGAWEB2_DEPENDENCY_PGSQL_USER=${ICINGAWEB2_DEPENDENCY_PGSQL_USER:-${DEFAULT_PGSQL_USER}}
+	ICINGAWEB2_DEPENDENCY_PGSQL_PASS=${ICINGAWEB2_DEPENDENCY_PGSQL_PASS:-${DEPENDENCY_PASSWORD:-${DEFAULT_PGSQL_PASS}}}
+	ICINGAWEB2_DEPENDENCY_PGSQL_DATA=${ICINGAWEB2_DEPENDENCY_PGSQL_DATA:-icinga2_dependencies}
+
+	echo "Dependency: Checking database availability ..."
+	pgsql_wait \
+		"${ICINGAWEB2_DEPENDENCY_PGSQL_HOST}" \
+		"${ICINGAWEB2_DEPENDENCY_PGSQL_PORT}" \
+		"${PGSQL_ROOT_USER}"
+
+	icingacli module enable dependency_plugin
+
+	# Create PGSQL database
+	if [ -n "${PGSQL_ROOT_PASS:-}" ]; then
+		echo "Dependency: Creating database"
+		pgsql_conn "${ICINGAWEB2_DEPENDENCY_PGSQL_HOST}" \
+			"${ICINGAWEB2_DEPENDENCY_PGSQL_PORT}" \
+			"${PGSQL_ROOT_USER}" \
+			"${PGSQL_ROOT_PASS}" <<-EOF
+			\x
+			DO \$\$
+			BEGIN
+			  SET client_min_messages to 'WARNING';
+			  CREATE ROLE ${ICINGAWEB2_DEPENDENCY_PGSQL_USER} WITH LOGIN PASSWORD '${ICINGAWEB2_DEPENDENCY_PGSQL_PASS}';
+			  EXCEPTION WHEN DUPLICATE_OBJECT THEN
+			  RAISE NOTICE 'not creating role ${ICINGAWEB2_DEPENDENCY_PGSQL_USER} -- it already exists';
+			END
+			\$\$;
+		EOF
+	        psql -q "postgresql://${PGSQL_ROOT_USER}:${PGSQL_ROOT_PASS}@${ICINGAWEB2_DEPENDENCY_PGSQL_HOST}" \
+	        -tc "SELECT 1 FROM pg_database WHERE datname = '${ICINGAWEB2_DEPENDENCY_PGSQL_DATA}'" | grep 1 \
+	        || pgsql_conn "${ICINGAWEB2_DEPENDENCY_PGSQL_HOST}" \
+			"${ICINGAWEB2_DEPENDENCY_PGSQL_PORT}" \
+			"${PGSQL_ROOT_USER}" \
+			"${PGSQL_ROOT_PASS}" <<-EOF
+			SET client_min_messages to 'WARNING';
+			CREATE DATABASE ${ICINGAWEB2_DEPENDENCY_PGSQL_DATA} WITH ENCODING UTF8 OWNER ${ICINGAWEB2_DEPENDENCY_PGSQL_USER};
+			GRANT ALL PRIVILEGES ON DATABASE ${ICINGAWEB2_DEPENDENCY_PGSQL_DATA} TO ${ICINGAWEB2_DEPENDENCY_PGSQL_USER};
+			GRANT USAGE ON SCHEMA public TO ${ICINGAWEB2_DEPENDENCY_PGSQL_USER};
+			GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO ${ICINGAWEB2_DEPENDENCY_PGSQL_USER};
+			GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO ${ICINGAWEB2_DEPENDENCY_PGSQL_USER};
+		EOF
+	fi
+
+	echo "Dependency: Checking database connection"
+	pgsql_cred "${ICINGAWEB2_DEPENDENCY_PGSQL_HOST}" \
+		"${ICINGAWEB2_DEPENDENCY_PGSQL_PORT}" \
+		"${ICINGAWEB2_DEPENDENCY_PGSQL_USER}" \
+		"${ICINGAWEB2_DEPENDENCY_PGSQL_PASS}" \
+		"${ICINGAWEB2_DEPENDENCY_PGSQL_DATA}"
+
+	echo "Dependency: Importing schemas"
+	pgsql_conn "${ICINGAWEB2_DEPENDENCY_PGSQL_HOST}" \
+		"${ICINGAWEB2_DEPENDENCY_PGSQL_PORT}" \
+		"${ICINGAWEB2_DEPENDENCY_PGSQL_USER}" \
+		"${ICINGAWEB2_DEPENDENCY_PGSQL_PASS}" \
+		"${ICINGAWEB2_DEPENDENCY_PGSQL_DATA}" \
+			< /usr/local/share/icingaweb2/modules/dependency_plugin/application/schema/init.sql \
+			>> /tmp/pgsql-dependency-schema.log \
+			2>&1 || true
+
+	pgsql_conn "${ICINGAWEB2_DEPENDENCY_PGSQL_HOST}" \
+		"${ICINGAWEB2_DEPENDENCY_PGSQL_PORT}" \
+		"${ICINGAWEB2_DEPENDENCY_PGSQL_USER}" \
+		"${ICINGAWEB2_DEPENDENCY_PGSQL_PASS}" \
+		"${ICINGAWEB2_DEPENDENCY_PGSQL_DATA}" \
+			< /usr/local/share/icingaweb2/modules/dependency_plugin/application/schema/01-migration.sql \
+			>> /tmp/pgsql-dependency-schema.log \
+			2>&1 || true
+
+	echo "Dependency: Setting API connection"
+	pgsql_conn "${ICINGAWEB2_DEPENDENCY_PGSQL_HOST}" \
+		"${ICINGAWEB2_DEPENDENCY_PGSQL_PORT}" \
+		"${ICINGAWEB2_DEPENDENCY_PGSQL_USER}" \
+		"${ICINGAWEB2_DEPENDENCY_PGSQL_PASS}" \
+		"${ICINGAWEB2_DEPENDENCY_PGSQL_DATA}" <<-EOF
+		\x
+		DO \$\$
+		BEGIN
+		  SET client_min_messages to 'WARNING';
+		  TRUNCATE TABLE plugin_settings;
+		  INSERT INTO plugin_settings (api_host, api_endpoint, api_user, api_password)
+		  VALUES ('${ICINGAWEB2_DEPENDENCY_HOST:-$ICINGAWEB2_API_TRANSPORT_HOST}', '${ICINGAWEB2_DEPENDENCY_PORT:-$ICINGAWEB2_API_TRANSPORT_PORT}','${ICINGAWEB2_DEPENDENCY_USER:-$ICINGAWEB2_API_TRANSPORT_USER}','${ICINGAWEB2_DEPENDENCY_PASS:-$ICINGAWEB2_API_TRANSPORT_PASS}');
+		END
+		\$\$;
+	EOF
+
+	echo "Dependency: Configuration"
+	mkdir -p ${ICINGAWEB2_DEPENDENCY_CONFIG_PATH}
+	touch ${ICINGAWEB2_DEPENDENCY_CONFIG}
+
+	ini_set ${ICINGAWEB2_RESOURCE_CONFIG} icinga2_dependencies type		\"db\"
+	ini_set ${ICINGAWEB2_RESOURCE_CONFIG} icinga2_dependencies db		\"pgsql\"
+	ini_set ${ICINGAWEB2_RESOURCE_CONFIG} icinga2_dependencies host		\"${ICINGAWEB2_DEPENDENCY_PGSQL_HOST}\"
+	ini_set ${ICINGAWEB2_RESOURCE_CONFIG} icinga2_dependencies dbname	\"${ICINGAWEB2_DEPENDENCY_PGSQL_DATA}\"
+	ini_set ${ICINGAWEB2_RESOURCE_CONFIG} icinga2_dependencies username	\"${ICINGAWEB2_DEPENDENCY_PGSQL_USER}\"
+	ini_set ${ICINGAWEB2_RESOURCE_CONFIG} icinga2_dependencies password	\"${ICINGAWEB2_DEPENDENCY_PGSQL_PASS}\"
+	ini_set ${ICINGAWEB2_RESOURCE_CONFIG} icinga2_dependencies charset	\"${ICINGAWEB2_DEPENDENCY_PGSQL_CHARSET:-utf8}\"
+	ini_set ${ICINGAWEB2_RESOURCE_CONFIG} icinga2_dependencies use_ssl	\"${ICINGAWEB2_DEPENDENCY_PGSQL_SSL:-0}\"
+	ini_set ${ICINGAWEB2_RESOURCE_CONFIG} icinga2_dependencies ssl_key      \"${ICINGAWEB2_DEPENDENCY_PGSQL_SSL_KEY}\"
+	ini_set ${ICINGAWEB2_RESOURCE_CONFIG} icinga2_dependencies ssl_cert     \"${ICINGAWEB2_DEPENDENCY_PGSQL_SSL_CERT}\"
+	ini_set ${ICINGAWEB2_RESOURCE_CONFIG} icinga2_dependencies ssl_ca       \"${ICINGAWEB2_DEPENDENCY_PGSQL_SSL_CA:-/etc/ssl/certs/ca-certificates.crt}\"
+
+
+	ini_set ${ICINGAWEB2_DEPENDENCY_CONFIG} db resource \"icinga2_dependencies\"
+
+	echo -e "Dependency: Finished configuration\n"
+else
+	icingacli module disable dependency_plugin || true
+fi
