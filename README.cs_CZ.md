@@ -411,6 +411,7 @@ Vypsat logy lze v defaultní konfiguraci například příkazem `docker logs ici
 | `APACHE2_OIDC_SESSION_TYPE` | server-cache | Typ ukládání relace |
 | `APACHE2_OIDC_SESSION_DURATION` | 86400 | Maximální délka aplikační relace v sekundách |
 | `APACHE2_OIDC_CACHE_ENCRYPT` | Off | Zapíná šifrování mezipaměti serveru |
+| `APACHE2_OIDC_AUTH_REQUEST_PARAMS` | *nenastaveno* | Další parametry budou poslány společně s autorizačním požadavkem |
 | `TZ` | UTC | Nastav časové pásmo které má kontejner použít |
 | `ICINGAWEB2_FEATURE_PHP_FPM` | true | Použij PHP-FPM a mpm_event ke zpracování PHP |
 | `PHP_FPM_OPCACHE_ENABLE` | 1 | Použij FPM opcache |

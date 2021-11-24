@@ -275,7 +275,7 @@ To successfully use the module variables `APACHE2_OIDC_CLIENTID`, `APACHE2_OIDC_
 Icingaweb itself does not support federated identity, it is not possible to source groups, user attributes or other values. This works strictly as an SSO and supplies usernames via `REMOTE_USER` header. Groups need to be source either from LDAP or local database.
 
 
-# Logování
+# Logging
 
 Logging can be set with Docker [driver](https://docs.docker.com/config/containers/logging/configure/).
 
@@ -414,6 +414,7 @@ By default you can show logs with dommand `docker logs icingaweb`.
 | `APACHE2_OIDC_SESSION_TYPE` | server-cache | Session type |
 | `APACHE2_OIDC_SESSION_DURATION` | 86400 | Session duration |
 | `APACHE2_OIDC_CACHE_ENCRYPT` | Off | OIDC encrypt cache |
+| `APACHE2_OIDC_AUTH_REQUEST_PARAMS` | *unset* | Extra parameters will be sent along with the Authorization Request |
 | `TZ` | UTC | Sets timezone for the container |
 | `ICINGAWEB2_FEATURE_PHP_FPM` | true | Use PHP-FPM and mpm_event to process PHP |
 | `PHP_FPM_OPCACHE_ENABLE` | 1 | Use FPM opcache |
