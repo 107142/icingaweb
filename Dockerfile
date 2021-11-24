@@ -23,7 +23,7 @@ LABEL maintainer="Marek Jaroš <jaros@ics.muni.cz>" \
 
 ENV CODENAME=bullseye
 ENV LANG=en_US.UTF-8 LANGUAGE=en_US:en
-ARG OPENID_CONNECT=2.4.9.4
+ARG OPENID_CONNECT=2.4.10
 
 # Prepare environment
 RUN export DEBIAN_FRONTEND=noninteractive \
@@ -75,7 +75,7 @@ RUN export DEBIAN_FRONTEND=noninteractive \
 		libhiredis0.14 \
 		libcjose0 \
 	# OpenID Connect
-	&& ( wget -O /tmp/libapache2-mod-auth-openidc.deb https://github.com/zmartzone/mod_auth_openidc/releases/download/v$OPENID_CONNECT/libapache2-mod-auth-openidc_$OPENID_CONNECT-1.buster+1_amd64.deb \
+	&& ( wget -O /tmp/libapache2-mod-auth-openidc.deb https://github.com/zmartzone/mod_auth_openidc/releases/download/v$OPENID_CONNECT/libapache2-mod-auth-openidc_$OPENID_CONNECT-1.${CODENAME}+1_amd64.deb \
 	&& dpkg -i /tmp/libapache2-mod-auth-openidc.deb; apt-get -f -y install ) \
 	# Locales
 	&& sed -i -E 's/^#?\ ?en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen \
