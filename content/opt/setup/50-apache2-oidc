@@ -7,6 +7,7 @@ APACHE2_OIDC_ENABLE=${APACHE2_OIDC_ENABLE=:-"false"}
 if evaluate_boolean "${APACHE2_OIDC_ENABLE}"; then
 	echo "Apache2: Setting up OpenID Connect"
 
+	[[ -v APACHE2_OIDC_AUTH_REQUEST_PARAMS ]] && APACHE2_OIDC_AUTH_REQ_PARAMS="OIDCAuthRequestParams \"${APACHE2_OIDC_AUTH_REQUEST_PARAMS}\""
 	cat > /etc/apache2/conf-available/oidc-auth.conf <<-END
 	OIDCProviderMetadataRefreshInterval ${APACHE2_OIDC_METADATA_REFRESH:-3600}
 	OIDCProviderMetadataURL $APACHE2_OIDC_METADATA
@@ -26,6 +27,7 @@ if evaluate_boolean "${APACHE2_OIDC_ENABLE}"; then
 	OIDCSessionMaxDuration ${APACHE2_OIDC_SESSION_MAX_DURATION:-86400}
 	OIDCCacheEncrypt ${APACHE2_OIDC_CACHE_ENCRYPT:-Off}
 	OIDCStateMaxNumberOfCookies 10 true
+	${APACHE2_OIDC_AUTH_REQ_PARAMS}
 
 	<Location /icingaweb2/authentication/logout>
 		Redirect https://%{HTTP_HOST}$APACHE2_OIDC_REDIRECT_URI?logout=https://%{HTTP_HOST}

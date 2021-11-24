@@ -6,7 +6,7 @@ RUN printf "Running on ${BUILDPLATFORM:-linux/amd64}, building for ${TARGETPLATF
 # Basic info
 ARG NAME
 ARG BUILD_DATE
-ARG VERSION=2.9.3
+ARG VERSION=2.9.5
 ARG VCS_REF
 ARG VCS_URL
 
@@ -22,8 +22,9 @@ LABEL maintainer="Marek Jaroš <jaros@ics.muni.cz>" \
 	org.label-schema.schema-version="1.0"
 
 ENV CODENAME=bullseye
+ENV PACKAGE=2.9.5-1.${CODENAME}
 ENV LANG=en_US.UTF-8 LANGUAGE=en_US:en
-ARG OPENID_CONNECT=2.4.9.4
+ARG OPENID_CONNECT=2.4.10
 
 # Prepare environment
 RUN export DEBIAN_FRONTEND=noninteractive \
@@ -75,7 +76,7 @@ RUN export DEBIAN_FRONTEND=noninteractive \
 		libhiredis0.14 \
 		libcjose0 \
 	# OpenID Connect
-	&& ( wget -O /tmp/libapache2-mod-auth-openidc.deb https://github.com/zmartzone/mod_auth_openidc/releases/download/v$OPENID_CONNECT/libapache2-mod-auth-openidc_$OPENID_CONNECT-1.buster+1_amd64.deb \
+	&& ( wget -O /tmp/libapache2-mod-auth-openidc.deb https://github.com/zmartzone/mod_auth_openidc/releases/download/v$OPENID_CONNECT/libapache2-mod-auth-openidc_$OPENID_CONNECT-1.${CODENAME}+1_amd64.deb \
 	&& dpkg -i /tmp/libapache2-mod-auth-openidc.deb; apt-get -f -y install ) \
 	# Locales
 	&& sed -i -E 's/^#?\ ?en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen \
@@ -105,10 +106,10 @@ RUN export DEBIAN_FRONTEND=noninteractive \
 	&& echo "deb [signed-by=/usr/share/keyrings/postgres-keyring.gpg] https://apt.postgresql.org/pub/repos/apt/ $CODENAME-pgdg main" > /etc/apt/sources.list.d/$CODENAME-pgdg.list \
 	&& apt-get update \
 	&& apt-get -f -y install --no-install-recommends -o DPkg::options::="--force-unsafe-io" \
-		icingacli \
-		icingaweb2 \
-		icingaweb2-common \
-		icingaweb2-module-monitoring \
+		icingacli=${PACKAGE} \
+		icingaweb2=${PACKAGE} \
+		icingaweb2-common=${PACKAGE} \
+		icingaweb2-module-monitoring=${PACKAGE} \
 		php-icinga \
 		icinga-php-library \
 		icinga-php-thirdparty \
