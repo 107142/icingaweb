@@ -6,7 +6,7 @@ RUN printf "Running on ${BUILDPLATFORM:-linux/amd64}, building for ${TARGETPLATF
 # Basic info
 ARG NAME
 ARG BUILD_DATE
-ARG VERSION=2.9.3
+ARG VERSION=2.9.5
 ARG VCS_REF
 ARG VCS_URL
 
@@ -22,6 +22,7 @@ LABEL maintainer="Marek Jaroš <jaros@ics.muni.cz>" \
 	org.label-schema.schema-version="1.0"
 
 ENV CODENAME=bullseye
+ENV PACKAGE=2.9.5-1.${CODENAME}
 ENV LANG=en_US.UTF-8 LANGUAGE=en_US:en
 ARG OPENID_CONNECT=2.4.10
 
@@ -105,10 +106,10 @@ RUN export DEBIAN_FRONTEND=noninteractive \
 	&& echo "deb [signed-by=/usr/share/keyrings/postgres-keyring.gpg] https://apt.postgresql.org/pub/repos/apt/ $CODENAME-pgdg main" > /etc/apt/sources.list.d/$CODENAME-pgdg.list \
 	&& apt-get update \
 	&& apt-get -f -y install --no-install-recommends -o DPkg::options::="--force-unsafe-io" \
-		icingacli \
-		icingaweb2 \
-		icingaweb2-common \
-		icingaweb2-module-monitoring \
+		icingacli=${PACKAGE} \
+		icingaweb2=${PACKAGE} \
+		icingaweb2-common=${PACKAGE} \
+		icingaweb2-module-monitoring=${PACKAGE} \
 		php-icinga \
 		icinga-php-library \
 		icinga-php-thirdparty \
