@@ -178,7 +178,7 @@ RUN mkdir -p /usr/local/share/icingaweb2/modules/ \
 	# Pre-compress static content
 	&& find /usr/share/icingaweb2/public/ -type f -a \( -name '*.html' -o -name '*.css' -o -name '*.js' -o -name '*.eot' -o -name '*.svg' -o -name '*.ttf' \) -exec brotli --best {} \+ \
 	# Configuration touch-up
-	&& mv /etc/icingaweb2/ /etc/icingaweb2.dist \
+	&& mv -n /etc/icingaweb2/ /etc/icingaweb2.dist \
 	&& chmod u+s,g+s \
 		/bin/ping \
 		/bin/ping6 \
