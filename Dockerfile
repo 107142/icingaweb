@@ -170,7 +170,6 @@ RUN mkdir -p /usr/local/share/icingaweb2/modules/ \
 		-e 's!^(\s*ErrorLog)\s+\S+!\1 /dev/stderr!g' \
 		"/etc/apache2/apache2.conf" \
 		"/etc/apache2/conf-available/other-vhosts-access-log.conf" \
-		"/etc/apache2/sites-available/000-default.conf" \
 	# FPM
 	&& sed -ri \
 		-e 's/error_log.*/error_log = \/dev\/stdout/g' \
