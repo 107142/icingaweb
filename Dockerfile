@@ -110,7 +110,7 @@ RUN export DEBIAN_FRONTEND=noninteractive \
 		icingaweb2=${PACKAGE} \
 		icingaweb2-common=${PACKAGE} \
 		icingaweb2-module-monitoring=${PACKAGE} \
-		php-icinga \
+		php-icinga=${PACKAGE} \
 		icinga-php-library \
 		icinga-php-thirdparty \
 		postgresql-client
