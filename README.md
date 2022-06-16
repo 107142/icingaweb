@@ -272,7 +272,7 @@ Enabled with `APACHE2_OIDC_ENABLE` variable.
 
 To successfully use the module variables `APACHE2_OIDC_CLIENTID`, `APACHE2_OIDC_CLIENTSECRET`, `APACHE2_OIDC_REMOTE_USER_CLAIM` and `APACHE2_OIDC_METADATA` need to be set.
 
-Icingaweb itself does not support federated identity, it is not possible to source groups, user attributes or other values. This works strictly as an SSO and supplies usernames via `REMOTE_USER` header. Groups need to be source either from LDAP or local database.
+Icingaweb itself does not support federated identity, it is not possible to source groups, user attributes or other values. This works strictly as an SSO and supplies usernames via `REMOTE_USER` header. Groups need to be sourced either from LDAP or a local database.
 
 
 # Logging
@@ -414,6 +414,16 @@ By default you can show logs with dommand `docker logs icingaweb`.
 | `APACHE2_OIDC_SESSION_TYPE` | server-cache | Session type |
 | `APACHE2_OIDC_SESSION_DURATION` | 86400 | Session duration |
 | `APACHE2_OIDC_CACHE_ENCRYPT` | Off | OIDC encrypt cache |
+| `APACHE2_OIDC_CACHE_TYPE` | file | OIDC Cache type (shm, memcache, file, redis) |
+| `APACHE2_OIDC_CACHE_DIR` | /var/cache/apache2/mod_auth_openidc/cache | Directory that holds cache files. Used when cache type is set to `file` |
+| `APACHE2_OIDC_CACHE_FILE_CLEAN_INTERVAL` | *unset* | Cache file clean interval in seconds (only triggered on writes) for cache type `file` |
+| `APACHE2_OIDC_CACHE_SHM_MAX` | *unset* | Specifies the maximum number of name/value pair entries that can be cached for cache type `shm` |
+| `APACHE2_OIDC_CACHE_SHM_ENTRY_MAX` | *unset* | Specifies the maximum size for a single cache entry in bytes. Used with cache type `shm` |
+| `APACHE2_OIDC_MEMCACHE_SERVERS` | *unset* | Specifies the memcache servers used for caching as a space separated list of <hostname>[:<port>] tuples |
+| `APACHE2_OIDC_REDIS_SERVER` | *unset* | Specifies the Redis server used for caching as a <hostname>[:<port>] tuple |
+| `APACHE2_OIDC_REDIS_PASSWORD` | *unset* | Password to be used if the Redis server requires [authentication](http://redis.io/commands/auth) |
+| `APACHE2_OIDC_REDIS_DB` | *unset* | Logical database to [select](https://redis.io/commands/select) on the Redis server |
+| `APACHE2_OIDC_REDIS_TIMEOUT` | *unset* | Timeout for connecting to the Redis servers |
 | `APACHE2_OIDC_AUTH_REQUEST_PARAMS` | *unset* | Extra parameters will be sent along with the Authorization Request |
 | `TZ` | UTC | Sets timezone for the container |
 | `ICINGAWEB2_FEATURE_PHP_FPM` | true | Use PHP-FPM and mpm_event to process PHP |
