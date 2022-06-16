@@ -48,6 +48,7 @@ RUN export DEBIAN_FRONTEND=noninteractive \
 		php-ldap \
 		php-yaml \
 		php-pgsql \
+		php-mysql \
 		php-mbstring \
 		php-gmp \
 		php-soap \
