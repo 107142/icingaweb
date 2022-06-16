@@ -426,6 +426,7 @@ By default you can show logs with dommand `docker logs icingaweb`.
 | `APACHE2_OIDC_REDIS_DB` | *unset* | Logical database to [select](https://redis.io/commands/select) on the Redis server |
 | `APACHE2_OIDC_REDIS_TIMEOUT` | *unset* | Timeout for connecting to the Redis servers |
 | `APACHE2_OIDC_AUTH_REQUEST_PARAMS` | *unset* | Extra parameters will be sent along with the Authorization Request |
+| `APACHE2_OIDC_XFORWARDED_HEADERS` | *unset* | Define the X-Forwarded-* or Forwarded headers that will be taken into account as set by a reverse proxy |
 | `TZ` | UTC | Sets timezone for the container |
 | `ICINGAWEB2_FEATURE_PHP_FPM` | true | Use PHP-FPM and mpm_event to process PHP |
 | `PHP_FPM_OPCACHE_ENABLE` | 1 | Use FPM opcache |

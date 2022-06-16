@@ -414,15 +414,16 @@ Vypsat logy lze v defaultní konfiguraci například příkazem `docker logs ici
 | `APACHE2_OIDC_CACHE_TYPE` | file | Type OIDC mezipameti  (shm, memcache, file, redis) |
 | `APACHE2_OIDC_CACHE_FALLBACK` | Off | Použij "OIDCSessionType client-cookie" pokud primární mezipamět (např. memcache nebo redis) selže |
 | `APACHE2_OIDC_CACHE_DIR` | /var/cache/apache2/mod_auth_openidc/cache | Adresář držící soubory mezipaměti. Použit při typu meipaměti `file` |
-| `APACHE2_OIDC_CACHE_FILE_CLEAN_INTERVAL` | *unset* | Interval čištění mezipaměti v sekundách (spuštěno pouze při zápisech) pro typ mezipaměti `file` |
-| `APACHE2_OIDC_CACHE_SHM_MAX` | *unset* | Udává maximální velikost pro páry položek jméno/hodnota které mohou být uloženy pro typ mezipaměti `shm` |
-| `APACHE2_OIDC_CACHE_SHM_ENTRY_MAX` | *unset* | Udává maximální velikost pro jeden zápis do mezipěmti v bajtech. Použito pro mezipamět typu `shm` |
-| `APACHE2_OIDC_MEMCACHE_SERVERS` | *unset* | Nastaví memcache servery pro mezipamet. Mezerou oddělený list <hostname>[:<port>] |
-| `APACHE2_OIDC_REDIS_SERVER` | *unset* | Nastaví Redis server pro mezipamet <hostname>[:<port>] |
-| `APACHE2_OIDC_REDIS_PASSWORD` | *unset* | Heslo pro Redis server pokud je vyžadována [autentizace](http://redis.io/commands/auth) |
-| `APACHE2_OIDC_REDIS_DB` | *unset* | Logická databáze pro [select](https://redis.io/commands/select) Redis serveru |
-| `APACHE2_OIDC_REDIS_TIMEOUT` | *unset* | Časový limit pro připojení k Redis serveru |
+| `APACHE2_OIDC_CACHE_FILE_CLEAN_INTERVAL` | *nenastaveno* | Interval čištění mezipaměti v sekundách (spuštěno pouze při zápisech) pro typ mezipaměti `file` |
+| `APACHE2_OIDC_CACHE_SHM_MAX` | *nenastaveno* | Udává maximální velikost pro páry položek jméno/hodnota které mohou být uloženy pro typ mezipaměti `shm` |
+| `APACHE2_OIDC_CACHE_SHM_ENTRY_MAX` | *nenastaveno* | Udává maximální velikost pro jeden zápis do mezipěmti v bajtech. Použito pro mezipamět typu `shm` |
+| `APACHE2_OIDC_MEMCACHE_SERVERS` | *nenastaveno* | Nastaví memcache servery pro mezipamet. Mezerou oddělený list <hostname>[:<port>] |
+| `APACHE2_OIDC_REDIS_SERVER` | *nenastaveno* | Nastaví Redis server pro mezipamet <hostname>[:<port>] |
+| `APACHE2_OIDC_REDIS_PASSWORD` | *nenastaveno* | Heslo pro Redis server pokud je vyžadována [autentizace](http://redis.io/commands/auth) |
+| `APACHE2_OIDC_REDIS_DB` | *nenastaveno* | Logická databáze pro [select](https://redis.io/commands/select) Redis serveru |
+| `APACHE2_OIDC_REDIS_TIMEOUT` | *nenastaveno* | Časový limit pro připojení k Redis serveru |
 | `APACHE2_OIDC_AUTH_REQUEST_PARAMS` | *nenastaveno* | Další parametry budou poslány společně s autorizačním požadavkem |
+| `APACHE2_OIDC_XFORWARDED_HEADERS` | *nenastaveno* | Definuj X-Forwarded-* nebo Forwarded hlavičky keré mají být brány jako nastavené reverzní proxy |
 | `TZ` | UTC | Nastav časové pásmo které má kontejner použít |
 | `ICINGAWEB2_FEATURE_PHP_FPM` | true | Použij PHP-FPM a mpm_event ke zpracování PHP |
 | `PHP_FPM_OPCACHE_ENABLE` | 1 | Použij FPM opcache |
