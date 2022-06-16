@@ -189,8 +189,7 @@ RUN mkdir -p /usr/local/share/icingaweb2/modules/ \
 	&& apt-get purge -y linux-libc-dev libc6-dev python-dev libc-dev-bin libexpat1-dev brotli \
 	&& apt-get -f -y autoremove \
 	&& apt-get -y clean \
-	&& rm -rf /var/lib/apt/lists/* \
-&& ls -lah /var/cache
+	&& rm -rf /var/lib/apt/lists/* /var/cache/ldconfig /var/cache/debconf /var/cache/apt
 
 # Finalize
 RUN chmod +x /opt/setup/* /opt/supervisor/* /opt/run /usr/local/bin/ini_set
