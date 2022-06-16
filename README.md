@@ -436,7 +436,14 @@ By default you can show logs with dommand `docker logs icingaweb`.
 | `TPHP_FPM_PM_MAX` | 32 | pm.max_spare_servers |
 | `PHP_FPM_PM_IDLE` | 30 | Idle process limit |
 | `PHP_FPM_PM_CHILDREN` | 48 | Maximum children |
-| `PHP_FPM_PM_REQUESTS` | 50000 | Maximum requests |
+| `PHP_FPM_PM_REQUESTS` | 0 | Maximum requests |
+| `APACHE2_EVENT_SERVERS` | 3 | StartServers |
+| `APACHE2_EVENT_MIN_SPARE` | 75 | MinSpareThreads |
+| `APACHE2_EVENT_MAX_SPARE` | 250 | MaxSpareThreads |
+| `APACHE2_EVENT_THREADS` | 64 | ThreadLimit |
+| `APACHE2_EVENT_CHILD_THREADS` | 25 | ThreadsPerChild |
+| `APACHE2_EVENT_WORKERS` | 400 | MaxRequestWorkers |
+| `APACHE2_EVENT_CONN_PER_CHILD` | 0 | MaxConnectionsPerChild |
 | `ICINGAWEB2_DOCKER_DEBUG` | 0 | Show detailed output of container scripts during start-up |
 
 
