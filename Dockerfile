@@ -184,12 +184,13 @@ RUN mkdir -p /usr/local/share/icingaweb2/modules/ \
 		/bin/ping6 \
 	&& usermod -aG tty www-data \
 	&& chmod o+w /dev/std* \
-	&& mkdir -p /run/php/ /var/cache/apache2/mod_auth_openidc/cache && chown -R www-data /run/php /var/cache/apache2 \
+	&& mkdir -p /run/php/ && chown www-data /run/php \
 	# Cleanup
 	&& apt-get purge -y linux-libc-dev libc6-dev python-dev libc-dev-bin libexpat1-dev brotli \
 	&& apt-get -f -y autoremove \
 	&& apt-get -y clean \
-	&& rm -rf /var/lib/apt/lists/* /var/cache/*
+	&& rm -rf /var/lib/apt/lists/* \
+&& ls -lah /var/cache
 
 # Finalize
 RUN chmod +x /opt/setup/* /opt/supervisor/* /opt/run /usr/local/bin/ini_set
