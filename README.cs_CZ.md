@@ -433,7 +433,14 @@ Vypsat logy lze v defaultní konfiguraci například příkazem `docker logs ici
 | `TPHP_FPM_PM_MAX` | 32 | pm.max_spare_servers |
 | `PHP_FPM_PM_IDLE` | 30 | Limit pro nečinnost procesu |
 | `PHP_FPM_PM_CHILDREN` | 48 | Maximální počet dětí FPM |
-| `PHP_FPM_PM_REQUESTS` | 50000 | Maximum požadavků na proces před jeho restartem |
+| `PHP_FPM_PM_REQUESTS` | 0 | Maximum požadavků na proces před jeho restartem |
+| `APACHE2_EVENT_SERVERS` | 3 | StartServers |
+| `APACHE2_EVENT_MIN_SPARE` | 75 | MinSpareThreads |
+| `APACHE2_EVENT_MAX_SPARE` | 250 | MaxSpareThreads |
+| `APACHE2_EVENT_THREADS` | 64 | ThreadLimit |
+| `APACHE2_EVENT_CHILD_THREADS` | 25 | ThreadsPerChild |
+| `APACHE2_EVENT_WORKERS` | 400 | MaxRequestWorkers |
+| `APACHE2_EVENT_CONN_PER_CHILD` | 0 | MaxConnectionsPerChild |
 | `ICINGAWEB2_DOCKER_DEBUG` | 0 | Detailní výstup startovních skripů kontejneru |
 
 
