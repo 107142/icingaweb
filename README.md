@@ -158,8 +158,6 @@ docker run -t \
 
 Dicrector is using Icinga API and Icinga endpoint, which is most of the time specified via FQDN. To make sure Docker correctly sends the network traffic to the correct container you should avoid using identical hostnames (*--hostname* switch). FQDN should be assigned to Icinga core when running on the same machine or multiple FQDN should be used (for Icinga and Icingaweb).
 
-It is possible to turn off automatic kickstart during container start by setting `ICINGAWEB2_FEATURE_DIRECTOR_KICKSTART` to `false`.
-
 To disable the director set `ICINGAWEB2_FEATURE_DIRECTOR` to `false`.
 
 
@@ -338,8 +336,8 @@ By default you can show logs with dommand `docker logs icingaweb`.
 | `ICINGAWEB2_FEATURE_GRAPHITE` | false | Enable Graphite |
 | `ICINGAWEB2_FEATURE_GRAPHITE_URL` | http://${ICINGAWEB2_FEATURE_GRAPHITE_HOST} | Web-URL for Graphite |
 | `ICINGAWEB2_FEATURE_DIRECTOR` | true | Enable Director |
-| `ICINGAWEB2_FEATURE_DIRECTOR_KICKSTART` | true | Enable Director kickstart |
-| `ICINGAWEB2_DIRECTOR_ENDPOINT_FQDN` | Sources `ICINGAWEB2_API_TRANSPORT_HOST` | Icinga monitoring endpoint domain name. Most of the time FQDN. |
+| `ICINGAWEB2_FEATURE_DIRECTOR_KICKSTART` | true | Enable automatic Director Kickstart when necessary. Disabling this is not recommended |
+| `ICINGAWEB2_DIRECTOR_ENDPOINT_FQDN` | Sources `ICINGAWEB2_API_TRANSPORT_HOST` | Icinga monitoring endpoint domain name. Most of the time FQDN |
 | `ICINGAWEB2_DIRECTOR_ENDPOINT_HOST` | Sources `ICINGAWEB2_API_TRANSPORT_HOST` | Icinga API host |
 | `ICINGAWEB2_DIRECTOR_ENDPOINT_PORT` | Sources `ICINGAWEB2_API_TRANSPORT_PORT` | Icinga API port |
 | `ICINGAWEB2_DIRECTOR_ENDPOINT_USER` | Sources `ICINGAWEB2_API_TRANSPORT_USER` | Icinga API user |
