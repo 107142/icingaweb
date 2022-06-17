@@ -156,7 +156,7 @@ docker run -t \
 
 [Icinga Director](https://github.com/Icinga/icingaweb2-module-director) module is by default enabled. Communicates with Icinga daemon via API transport. Configuration via environment variables (see [Reference](README.md#reference) section).
 
-Dicrector is using Icinga API and Icinga endpoint, which is most of the time specified via FQDN. To make sure Docker correctly sends the network traffic to the correct container you should avoid using identical hostnames (*--hostname* switch). FQDN should be assigned to Icinga core when running on the same machine or multiple FQDN should be used (for Icinga and Icingaweb).
+Director is using Icinga API and Icinga endpoint, which is most of the time specified via FQDN. To make sure Docker correctly sends the network traffic to the correct container you should avoid using identical hostnames (*--hostname* switch). FQDN should be assigned to Icinga core when running on the same machine or multiple FQDN should be used (for Icinga and Icingaweb).
 
 To disable the director set `ICINGAWEB2_FEATURE_DIRECTOR` to `false`.
 
