@@ -93,7 +93,7 @@ ARG GITREF_MODGRAPHITE=v1.1.0
 ARG GITREF_MODAWS=v1.1.0
 ARG GITREF_BUSSINESS=v2.3.1
 ARG GITREF_GRAFANA=v1.4.2
-ARG GITREF_PUPPETDB=v1.0.0
+ARG GITREF_PUPPETDB=master
 # Master is required, see: https://github.com/visgence/icinga2-dependency-module/pull/9
 ARG GITREF_DEPP=master
 ARG GITREF_VSPHERE=v1.1.1
@@ -152,7 +152,7 @@ RUN mkdir -p /usr/local/share/icingaweb2/modules/ \
 	| tar xz --strip-components=1 --directory=/usr/local/share/icingaweb2/modules/dependency_plugin/ -f - \
 	# Icingaweb PuppetDB module
 	&& mkdir -p /usr/local/share/icingaweb2/modules/puppetdb \
-	&& wget -q --no-cookies -O - "https://github.com/Icinga/icingaweb2-module-puppetdb/archive/refs/tags/${GITREF_PUPPETDB}.tar.gz" \
+	&& wget -q --no-cookies -O - "https://github.com/Icinga/icingaweb2-module-puppetdb/archive/refs/heads/${GITREF_PUPPETDB}.tar.gz" \
 	| tar xz --strip-components=1 --directory=/usr/local/share/icingaweb2/modules/puppetdb/ -f - \
 	# Icingaweb vSphere module
 	&& mkdir -p /usr/local/share/icingaweb2/modules/vsphere \
