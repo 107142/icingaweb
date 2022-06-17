@@ -39,18 +39,18 @@ if evaluate_boolean "${ICINGAWEB2_FEATURE_PHP_FPM}"; then
 	ini_set ${PHP_FPM_CONFIG_POOL} www pm.max_spare_servers ${PHP_FPM_PM_MAX:-32}
 	ini_set ${PHP_FPM_CONFIG_POOL} www pm.process_idle_timeout ${PHP_FPM_PM_IDLE:-30}
 	ini_set ${PHP_FPM_CONFIG_POOL} www pm.max_children ${PHP_FPM_PM_CHILDREN:-48}
-	ini_set ${PHP_FPM_CONFIG_POOL} www pm.max_requests ${PHP_FPM_PM_REQUESTS:-50000}
+	ini_set ${PHP_FPM_CONFIG_POOL} www pm.max_requests ${PHP_FPM_PM_REQUESTS:-0}
 
 	echo "Apache2: Enabling mpm_event"
 	cat > /etc/apache2/mods-available/mpm_event.conf <<-END
 	<IfModule mpm_event_module>
 		StartServers		${APACHE2_EVENT_SERVERS:-3}
-		MinSpareThreads		${APACHE2_EVENT_MIN_SPARE:-25}
-		MaxSpareThreads		${APACHE2_EVENT_MAX_SPARE:-75}
+		MinSpareThreads		${APACHE2_EVENT_MIN_SPARE:-75}
+		MaxSpareThreads		${APACHE2_EVENT_MAX_SPARE:-250}
 		ThreadLimit		${APACHE2_EVENT_THREADS:-64}
 		ThreadsPerChild		${APACHE2_EVENT_CHILD_THREADS:-25}
-		MaxRequestWorkers	${APACHE2_EVENT_WORKERS:-300}
-		MaxConnectionsPerChild	${APACHE2_EVENT_CONN_PER_CHILD:-1000}
+		MaxRequestWorkers	${APACHE2_EVENT_WORKERS:-400}
+		MaxConnectionsPerChild	${APACHE2_EVENT_CONN_PER_CHILD:-0}
 	</IfModule>
 	END
 

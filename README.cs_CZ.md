@@ -157,8 +157,6 @@ docker run -t \
 
 Director se připojuje přes API a ještě přes Icinga endpoint, který je většinou specifikován jako FQDN. Aby Docker správně poslal síťový provoz na korektní kontejner je nutné vyhnout se několika stejným jménům hosta na jedno FQDN (parametr *--hostname*). Celé doménové jméno by mělo být tedy přiřazeno Icinga jádru, případně musí být použito více FQDN (pro Icinga a Icingaweb).
 
-Je možné vypnout automatický kickstart při startu kontejneru nastavením proměnné `ICINGAWEB2_FEATURE_DIRECTOR_KICKSTART` na `false`.
-
 Pro vypnutí directora stačí nastavit proměnnou `ICINGAWEB2_FEATURE_DIRECTOR` na `false`.
 
 
@@ -268,7 +266,7 @@ Podpora pro OIDC je zapnuta přes proměnnou `APACHE2_OIDC_ENABLE`.
 
 Pro úspěšnou funkci je třeba nastavit proměnné `APACHE2_OIDC_CLIENTID`, `APACHE2_OIDC_CLIENTSECRET`, `APACHE2_OIDC_REMOTE_USER_CLAIM` a cestu k metadatům poskytovatele `APACHE2_OIDC_METADATA`.
 
-Icinga sama o sobě nijak s OIDC nespolupracuje, není tedy možné přejímat skupiny, atributy o uživatelých a další hodnoty. Funguje pouze jako SSO a předává uživatele přes `REMOTE_USER` hlavičku s tím že ostatní je třeba vyřešit pres LDAP nebo lokální skupiny v databázi.
+Icinga sama o sobě nijak s OIDC nespolupracuje, není tedy možné přejímat skupiny, atributy o uživatelích a další hodnoty. Funguje pouze jako SSO a předává uživatele přes `REMOTE_USER` hlavičku s tím že ostatní je třeba vyřešit pres LDAP nebo lokální skupiny v databázi.
 
 
 # Logování
@@ -335,7 +333,7 @@ Vypsat logy lze v defaultní konfiguraci například příkazem `docker logs ici
 | `ICINGAWEB2_FEATURE_GRAPHITE` | false | Nastav na `true` nebo `1` pro zapnutí graphite zapisovače |
 | `ICINGAWEB2_FEATURE_GRAPHITE_URL` | http://${ICINGAWEB2_FEATURE_GRAPHITE_HOST} | Web-URL pro Graphite |
 | `ICINGAWEB2_FEATURE_DIRECTOR` | true | Nastav na `false` nebo `0` pro vypnutí directora |
-| `ICINGAWEB2_FEATURE_DIRECTOR_KICKSTART` | true | Nastav `false` pro vypnutí automatického kickstartu directora při startu kontejneru. *Hodnota má význam pouze pokud je director zapnutý* |
+| `ICINGAWEB2_FEATURE_DIRECTOR_KICKSTART` | true | Zapne automatickou detekci Kickstartu Directora. Vypnutí není doporučováno |
 | `ICINGAWEB2_DIRECTOR_ENDPOINT_FQDN` | Zdrojuje `ICINGAWEB2_API_TRANSPORT_HOST` | Doménové jméno endpointu na kterém beží Icinga2. Většinou FQDN. |
 | `ICINGAWEB2_DIRECTOR_ENDPOINT_HOST` | Zdrojuje `ICINGAWEB2_API_TRANSPORT_HOST` | Adresa hosta |
 | `ICINGAWEB2_DIRECTOR_ENDPOINT_PORT` | Zdrojuje `ICINGAWEB2_API_TRANSPORT_PORT` | Port API |
@@ -411,7 +409,19 @@ Vypsat logy lze v defaultní konfiguraci například příkazem `docker logs ici
 | `APACHE2_OIDC_SESSION_TYPE` | server-cache | Typ ukládání relace |
 | `APACHE2_OIDC_SESSION_DURATION` | 86400 | Maximální délka aplikační relace v sekundách |
 | `APACHE2_OIDC_CACHE_ENCRYPT` | Off | Zapíná šifrování mezipaměti serveru |
+| `APACHE2_OIDC_CACHE_TYPE` | file | Type OIDC mezipameti  (shm, memcache, file, redis) |
+| `APACHE2_OIDC_CACHE_FALLBACK` | Off | Použij "OIDCSessionType client-cookie" pokud primární mezipamět (např. memcache nebo redis) selže |
+| `APACHE2_OIDC_CACHE_DIR` | /var/cache/apache2/mod_auth_openidc/cache | Adresář držící soubory mezipaměti. Použit při typu meipaměti `file` |
+| `APACHE2_OIDC_CACHE_FILE_CLEAN_INTERVAL` | *nenastaveno* | Interval čištění mezipaměti v sekundách (spuštěno pouze při zápisech) pro typ mezipaměti `file` |
+| `APACHE2_OIDC_CACHE_SHM_MAX` | *nenastaveno* | Udává maximální velikost pro páry položek jméno/hodnota které mohou být uloženy pro typ mezipaměti `shm` |
+| `APACHE2_OIDC_CACHE_SHM_ENTRY_MAX` | *nenastaveno* | Udává maximální velikost pro jeden zápis do mezipěmti v bajtech. Použito pro mezipamět typu `shm` |
+| `APACHE2_OIDC_MEMCACHE_SERVERS` | *nenastaveno* | Nastaví memcache servery pro mezipamet. Mezerou oddělený list <hostname>[:<port>] |
+| `APACHE2_OIDC_REDIS_SERVER` | *nenastaveno* | Nastaví Redis server pro mezipamet <hostname>[:<port>] |
+| `APACHE2_OIDC_REDIS_PASSWORD` | *nenastaveno* | Heslo pro Redis server pokud je vyžadována [autentizace](http://redis.io/commands/auth) |
+| `APACHE2_OIDC_REDIS_DB` | *nenastaveno* | Logická databáze pro [select](https://redis.io/commands/select) Redis serveru |
+| `APACHE2_OIDC_REDIS_TIMEOUT` | *nenastaveno* | Časový limit pro připojení k Redis serveru |
 | `APACHE2_OIDC_AUTH_REQUEST_PARAMS` | *nenastaveno* | Další parametry budou poslány společně s autorizačním požadavkem |
+| `APACHE2_OIDC_XFORWARDED_HEADERS` | *nenastaveno* | Definuj X-Forwarded-* nebo Forwarded hlavičky keré mají být brány jako nastavené reverzní proxy |
 | `TZ` | UTC | Nastav časové pásmo které má kontejner použít |
 | `ICINGAWEB2_FEATURE_PHP_FPM` | true | Použij PHP-FPM a mpm_event ke zpracování PHP |
 | `PHP_FPM_OPCACHE_ENABLE` | 1 | Použij FPM opcache |
@@ -433,7 +443,14 @@ Vypsat logy lze v defaultní konfiguraci například příkazem `docker logs ici
 | `TPHP_FPM_PM_MAX` | 32 | pm.max_spare_servers |
 | `PHP_FPM_PM_IDLE` | 30 | Limit pro nečinnost procesu |
 | `PHP_FPM_PM_CHILDREN` | 48 | Maximální počet dětí FPM |
-| `PHP_FPM_PM_REQUESTS` | 50000 | Maximum požadavků na proces před jeho restartem |
+| `PHP_FPM_PM_REQUESTS` | 0 | Maximum požadavků na proces před jeho restartem |
+| `APACHE2_EVENT_SERVERS` | 3 | StartServers |
+| `APACHE2_EVENT_MIN_SPARE` | 75 | MinSpareThreads |
+| `APACHE2_EVENT_MAX_SPARE` | 250 | MaxSpareThreads |
+| `APACHE2_EVENT_THREADS` | 64 | ThreadLimit |
+| `APACHE2_EVENT_CHILD_THREADS` | 25 | ThreadsPerChild |
+| `APACHE2_EVENT_WORKERS` | 400 | MaxRequestWorkers |
+| `APACHE2_EVENT_CONN_PER_CHILD` | 0 | MaxConnectionsPerChild |
 | `ICINGAWEB2_DOCKER_DEBUG` | 0 | Detailní výstup startovních skripů kontejneru |
 
 
