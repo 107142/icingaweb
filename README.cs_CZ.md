@@ -157,8 +157,6 @@ docker run -t \
 
 Director se připojuje přes API a ještě přes Icinga endpoint, který je většinou specifikován jako FQDN. Aby Docker správně poslal síťový provoz na korektní kontejner je nutné vyhnout se několika stejným jménům hosta na jedno FQDN (parametr *--hostname*). Celé doménové jméno by mělo být tedy přiřazeno Icinga jádru, případně musí být použito více FQDN (pro Icinga a Icingaweb).
 
-Je možné vypnout automatický kickstart při startu kontejneru nastavením proměnné `ICINGAWEB2_FEATURE_DIRECTOR_KICKSTART` na `false`.
-
 Pro vypnutí directora stačí nastavit proměnnou `ICINGAWEB2_FEATURE_DIRECTOR` na `false`.
 
 
@@ -335,7 +333,7 @@ Vypsat logy lze v defaultní konfiguraci například příkazem `docker logs ici
 | `ICINGAWEB2_FEATURE_GRAPHITE` | false | Nastav na `true` nebo `1` pro zapnutí graphite zapisovače |
 | `ICINGAWEB2_FEATURE_GRAPHITE_URL` | http://${ICINGAWEB2_FEATURE_GRAPHITE_HOST} | Web-URL pro Graphite |
 | `ICINGAWEB2_FEATURE_DIRECTOR` | true | Nastav na `false` nebo `0` pro vypnutí directora |
-| `ICINGAWEB2_FEATURE_DIRECTOR_KICKSTART` | true | Nastav `false` pro vypnutí automatického kickstartu directora při startu kontejneru. *Hodnota má význam pouze pokud je director zapnutý* |
+| `ICINGAWEB2_FEATURE_DIRECTOR_KICKSTART` | true | Zapne automatickou detekci Kickstartu Directora. Vypnutí není doporučováno |
 | `ICINGAWEB2_DIRECTOR_ENDPOINT_FQDN` | Zdrojuje `ICINGAWEB2_API_TRANSPORT_HOST` | Doménové jméno endpointu na kterém beží Icinga2. Většinou FQDN. |
 | `ICINGAWEB2_DIRECTOR_ENDPOINT_HOST` | Zdrojuje `ICINGAWEB2_API_TRANSPORT_HOST` | Adresa hosta |
 | `ICINGAWEB2_DIRECTOR_ENDPOINT_PORT` | Zdrojuje `ICINGAWEB2_API_TRANSPORT_PORT` | Port API |

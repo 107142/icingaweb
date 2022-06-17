@@ -66,16 +66,6 @@ if evaluate_boolean "${ICINGAWEB2_FEATURE_DIRECTOR}"; then
 		"${ICINGAWEB2_DIRECTOR_PGSQL_PASS}" \
 		"${ICINGAWEB2_DIRECTOR_PGSQL_DATA}"
 
-	echo "Director: Import database schema"
-	pgsql_conn "${ICINGAWEB2_DIRECTOR_PGSQL_HOST}" \
-		"${ICINGAWEB2_DIRECTOR_PGSQL_PORT}" \
-		"${ICINGAWEB2_DIRECTOR_PGSQL_USER}" \
-		"${ICINGAWEB2_DIRECTOR_PGSQL_PASS}" \
-		"${ICINGAWEB2_DIRECTOR_PGSQL_DATA}" \
-			< /usr/local/share/icingaweb2/modules/director/schema/pgsql.sql \
-			>> /tmp/pgsql-director-schema.log \
-			2>&1 || true
-
 	echo "Director: Configure"
 		ini_set ${ICINGAWEB2_RESOURCE_CONFIG} icingaweb2_director type       \"db\"
 		ini_set ${ICINGAWEB2_RESOURCE_CONFIG} icingaweb2_director db         \"pgsql\"
@@ -97,7 +87,7 @@ if evaluate_boolean "${ICINGAWEB2_FEATURE_DIRECTOR}"; then
 		ini_set $ICINGAWEB2_DIRECTOR_CONFIG config username \"${ICINGAWEB2_DIRECTOR_ENDPOINT_USER}\"
 		ini_set $ICINGAWEB2_DIRECTOR_CONFIG config password \"${ICINGAWEB2_DIRECTOR_ENDPOINT_PASS}\"
 
-		icingacli director migration run
+		icingacli director migration pending && icingacli director migration run
 
 	echo -e "Director: Finished configuration\n"
 	else
