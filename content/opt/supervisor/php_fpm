@@ -3,7 +3,7 @@
 . /opt/helpers
 
 if evaluate_boolean "${ICINGAWEB2_FEATURE_PHP_FPM}"; then
-	exec /usr/sbin/php-fpm${PHP_VERSION} -F
+	exec /usr/sbin/php-fpm${PHP_VERSION} -F -O
 else
 	sleep 2 && exit 0
 fi

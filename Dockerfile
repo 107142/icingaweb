@@ -6,7 +6,7 @@ RUN printf "Running on ${BUILDPLATFORM:-linux/amd64}, building for ${TARGETPLATF
 # Basic info
 ARG NAME
 ARG BUILD_DATE
-ARG VERSION=2.9.5
+ARG VERSION=2.10.1
 ARG VCS_REF
 ARG VCS_URL
 
@@ -22,9 +22,9 @@ LABEL maintainer="Marek Jaroš <jaros@ics.muni.cz>" \
 	org.label-schema.schema-version="1.0"
 
 ENV CODENAME=bullseye
-ENV PACKAGE=2.9.5-1.${CODENAME}
+ENV PACKAGE=2.10.1-1.${CODENAME}
 ENV LANG=en_US.UTF-8 LANGUAGE=en_US:en
-ARG OPENID_CONNECT=2.4.10
+ARG OPENID_CONNECT=2.4.11.2
 
 # Prepare environment
 RUN export DEBIAN_FRONTEND=noninteractive \
@@ -48,7 +48,9 @@ RUN export DEBIAN_FRONTEND=noninteractive \
 		php-ldap \
 		php-yaml \
 		php-pgsql \
+		php-mysql \
 		php-mbstring \
+		php-json \
 		php-gmp \
 		php-soap \
 		php-intl \
@@ -85,13 +87,13 @@ RUN export DEBIAN_FRONTEND=noninteractive \
 COPY content/ /
 
 # Which module version to install
-ARG GITREF_INCUBATOR=v0.6.0
-ARG GITREF_DIRECTOR=v1.8.1
-ARG GITREF_MODGRAPHITE=v1.1.0
+ARG GITREF_INCUBATOR=v0.16.1
+ARG GITREF_DIRECTOR=v1.9.1
+ARG GITREF_MODGRAPHITE=v1.2.1
 ARG GITREF_MODAWS=v1.1.0
-ARG GITREF_BUSSINESS=v2.3.1
+ARG GITREF_BUSSINESS=v2.4.0
 ARG GITREF_GRAFANA=v1.4.2
-ARG GITREF_PUPPETDB=v1.0.0
+ARG GITREF_PUPPETDB=master
 # Master is required, see: https://github.com/visgence/icinga2-dependency-module/pull/9
 ARG GITREF_DEPP=master
 ARG GITREF_VSPHERE=v1.1.1
@@ -110,7 +112,7 @@ RUN export DEBIAN_FRONTEND=noninteractive \
 		icingaweb2=${PACKAGE} \
 		icingaweb2-common=${PACKAGE} \
 		icingaweb2-module-monitoring=${PACKAGE} \
-		php-icinga \
+		php-icinga=${PACKAGE} \
 		icinga-php-library \
 		icinga-php-thirdparty \
 		postgresql-client
@@ -150,7 +152,7 @@ RUN mkdir -p /usr/local/share/icingaweb2/modules/ \
 	| tar xz --strip-components=1 --directory=/usr/local/share/icingaweb2/modules/dependency_plugin/ -f - \
 	# Icingaweb PuppetDB module
 	&& mkdir -p /usr/local/share/icingaweb2/modules/puppetdb \
-	&& wget -q --no-cookies -O - "https://github.com/Icinga/icingaweb2-module-puppetdb/archive/refs/tags/${GITREF_PUPPETDB}.tar.gz" \
+	&& wget -q --no-cookies -O - "https://github.com/Icinga/icingaweb2-module-puppetdb/archive/refs/heads/${GITREF_PUPPETDB}.tar.gz" \
 	| tar xz --strip-components=1 --directory=/usr/local/share/icingaweb2/modules/puppetdb/ -f - \
 	# Icingaweb vSphere module
 	&& mkdir -p /usr/local/share/icingaweb2/modules/vsphere \
@@ -170,7 +172,6 @@ RUN mkdir -p /usr/local/share/icingaweb2/modules/ \
 		-e 's!^(\s*ErrorLog)\s+\S+!\1 /dev/stderr!g' \
 		"/etc/apache2/apache2.conf" \
 		"/etc/apache2/conf-available/other-vhosts-access-log.conf" \
-		"/etc/apache2/sites-available/000-default.conf" \
 	# FPM
 	&& sed -ri \
 		-e 's/error_log.*/error_log = \/dev\/stdout/g' \
@@ -178,18 +179,18 @@ RUN mkdir -p /usr/local/share/icingaweb2/modules/ \
 	# Pre-compress static content
 	&& find /usr/share/icingaweb2/public/ -type f -a \( -name '*.html' -o -name '*.css' -o -name '*.js' -o -name '*.eot' -o -name '*.svg' -o -name '*.ttf' \) -exec brotli --best {} \+ \
 	# Configuration touch-up
-	&& mv /etc/icingaweb2/ /etc/icingaweb2.dist \
+	&& mv -n /etc/icingaweb2/ /etc/icingaweb2.dist \
 	&& chmod u+s,g+s \
 		/bin/ping \
 		/bin/ping6 \
 	&& usermod -aG tty www-data \
 	&& chmod o+w /dev/std* \
-	&& mkdir -p /run/php/ && chown www-data /run/php \
+	&& mkdir -p /run/php/ /var/cache/apache2/mod_auth_openidc/cache/ && chown www-data /run/php /var/cache/apache2/mod_auth_openidc/cache \
 	# Cleanup
 	&& apt-get purge -y linux-libc-dev libc6-dev python-dev libc-dev-bin libexpat1-dev brotli \
 	&& apt-get -f -y autoremove \
 	&& apt-get -y clean \
-	&& rm -rf /var/lib/apt/lists/* /var/cache/*
+	&& rm -rf /var/lib/apt/lists/* /var/cache/ldconfig /var/cache/debconf /var/cache/apt
 
 # Finalize
 RUN chmod +x /opt/setup/* /opt/supervisor/* /opt/run /usr/local/bin/ini_set

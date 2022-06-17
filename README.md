@@ -156,9 +156,7 @@ docker run -t \
 
 [Icinga Director](https://github.com/Icinga/icingaweb2-module-director) module is by default enabled. Communicates with Icinga daemon via API transport. Configuration via environment variables (see [Reference](README.md#reference) section).
 
-Dicrector is using Icinga API and Icinga endpoint, which is most of the time specified via FQDN. To make sure Docker correctly sends the network traffic to the correct container you should avoid using identical hostnames (*--hostname* switch). FQDN should be assigned to Icinga core when running on the same machine or multiple FQDN should be used (for Icinga and Icingaweb).
-
-It is possible to turn off automatic kickstart during container start by setting `ICINGAWEB2_FEATURE_DIRECTOR_KICKSTART` to `false`.
+Director is using Icinga API and Icinga endpoint, which is most of the time specified via FQDN. To make sure Docker correctly sends the network traffic to the correct container you should avoid using identical hostnames (*--hostname* switch). FQDN should be assigned to Icinga core when running on the same machine or multiple FQDN should be used (for Icinga and Icingaweb).
 
 To disable the director set `ICINGAWEB2_FEATURE_DIRECTOR` to `false`.
 
@@ -272,7 +270,7 @@ Enabled with `APACHE2_OIDC_ENABLE` variable.
 
 To successfully use the module variables `APACHE2_OIDC_CLIENTID`, `APACHE2_OIDC_CLIENTSECRET`, `APACHE2_OIDC_REMOTE_USER_CLAIM` and `APACHE2_OIDC_METADATA` need to be set.
 
-Icingaweb itself does not support federated identity, it is not possible to source groups, user attributes or other values. This works strictly as an SSO and supplies usernames via `REMOTE_USER` header. Groups need to be source either from LDAP or local database.
+Icingaweb itself does not support federated identity, it is not possible to source groups, user attributes or other values. This works strictly as an SSO and supplies usernames via `REMOTE_USER` header. Groups need to be sourced either from LDAP or a local database.
 
 
 # Logging
@@ -338,8 +336,8 @@ By default you can show logs with dommand `docker logs icingaweb`.
 | `ICINGAWEB2_FEATURE_GRAPHITE` | false | Enable Graphite |
 | `ICINGAWEB2_FEATURE_GRAPHITE_URL` | http://${ICINGAWEB2_FEATURE_GRAPHITE_HOST} | Web-URL for Graphite |
 | `ICINGAWEB2_FEATURE_DIRECTOR` | true | Enable Director |
-| `ICINGAWEB2_FEATURE_DIRECTOR_KICKSTART` | true | Enable Director kickstart |
-| `ICINGAWEB2_DIRECTOR_ENDPOINT_FQDN` | Sources `ICINGAWEB2_API_TRANSPORT_HOST` | Icinga monitoring endpoint domain name. Most of the time FQDN. |
+| `ICINGAWEB2_FEATURE_DIRECTOR_KICKSTART` | true | Enable automatic Director Kickstart when necessary. Disabling this is not recommended |
+| `ICINGAWEB2_DIRECTOR_ENDPOINT_FQDN` | Sources `ICINGAWEB2_API_TRANSPORT_HOST` | Icinga monitoring endpoint domain name. Most of the time FQDN |
 | `ICINGAWEB2_DIRECTOR_ENDPOINT_HOST` | Sources `ICINGAWEB2_API_TRANSPORT_HOST` | Icinga API host |
 | `ICINGAWEB2_DIRECTOR_ENDPOINT_PORT` | Sources `ICINGAWEB2_API_TRANSPORT_PORT` | Icinga API port |
 | `ICINGAWEB2_DIRECTOR_ENDPOINT_USER` | Sources `ICINGAWEB2_API_TRANSPORT_USER` | Icinga API user |
@@ -414,7 +412,19 @@ By default you can show logs with dommand `docker logs icingaweb`.
 | `APACHE2_OIDC_SESSION_TYPE` | server-cache | Session type |
 | `APACHE2_OIDC_SESSION_DURATION` | 86400 | Session duration |
 | `APACHE2_OIDC_CACHE_ENCRYPT` | Off | OIDC encrypt cache |
+| `APACHE2_OIDC_CACHE_TYPE` | file | OIDC Cache type (shm, memcache, file, redis) |
+| `APACHE2_OIDC_CACHE_FALLBACK` | Off | Fallback to "OIDCSessionType client-cookie" when the primary cache mechanism (e.g. memcache or redis) fails |
+| `APACHE2_OIDC_CACHE_DIR` | /var/cache/apache2/mod_auth_openidc/cache | Directory that holds cache files. Used when cache type is set to `file` |
+| `APACHE2_OIDC_CACHE_FILE_CLEAN_INTERVAL` | *unset* | Cache file clean interval in seconds (only triggered on writes) for cache type `file` |
+| `APACHE2_OIDC_CACHE_SHM_MAX` | *unset* | Specifies the maximum number of name/value pair entries that can be cached for cache type `shm` |
+| `APACHE2_OIDC_CACHE_SHM_ENTRY_MAX` | *unset* | Specifies the maximum size for a single cache entry in bytes. Used with cache type `shm` |
+| `APACHE2_OIDC_MEMCACHE_SERVERS` | *unset* | Specifies the memcache servers used for caching as a space separated list of <hostname>[:<port>] tuples |
+| `APACHE2_OIDC_REDIS_SERVER` | *unset* | Specifies the Redis server used for caching as a <hostname>[:<port>] tuple |
+| `APACHE2_OIDC_REDIS_PASSWORD` | *unset* | Password to be used if the Redis server requires [authentication](http://redis.io/commands/auth) |
+| `APACHE2_OIDC_REDIS_DB` | *unset* | Logical database to [select](https://redis.io/commands/select) on the Redis server |
+| `APACHE2_OIDC_REDIS_TIMEOUT` | *unset* | Timeout for connecting to the Redis servers |
 | `APACHE2_OIDC_AUTH_REQUEST_PARAMS` | *unset* | Extra parameters will be sent along with the Authorization Request |
+| `APACHE2_OIDC_XFORWARDED_HEADERS` | *unset* | Define the X-Forwarded-* or Forwarded headers that will be taken into account as set by a reverse proxy |
 | `TZ` | UTC | Sets timezone for the container |
 | `ICINGAWEB2_FEATURE_PHP_FPM` | true | Use PHP-FPM and mpm_event to process PHP |
 | `PHP_FPM_OPCACHE_ENABLE` | 1 | Use FPM opcache |
@@ -436,7 +446,14 @@ By default you can show logs with dommand `docker logs icingaweb`.
 | `TPHP_FPM_PM_MAX` | 32 | pm.max_spare_servers |
 | `PHP_FPM_PM_IDLE` | 30 | Idle process limit |
 | `PHP_FPM_PM_CHILDREN` | 48 | Maximum children |
-| `PHP_FPM_PM_REQUESTS` | 50000 | Maximum requests |
+| `PHP_FPM_PM_REQUESTS` | 0 | Maximum requests |
+| `APACHE2_EVENT_SERVERS` | 3 | StartServers |
+| `APACHE2_EVENT_MIN_SPARE` | 75 | MinSpareThreads |
+| `APACHE2_EVENT_MAX_SPARE` | 250 | MaxSpareThreads |
+| `APACHE2_EVENT_THREADS` | 64 | ThreadLimit |
+| `APACHE2_EVENT_CHILD_THREADS` | 25 | ThreadsPerChild |
+| `APACHE2_EVENT_WORKERS` | 400 | MaxRequestWorkers |
+| `APACHE2_EVENT_CONN_PER_CHILD` | 0 | MaxConnectionsPerChild |
 | `ICINGAWEB2_DOCKER_DEBUG` | 0 | Show detailed output of container scripts during start-up |
 
 
