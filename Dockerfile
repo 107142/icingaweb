@@ -50,6 +50,7 @@ RUN export DEBIAN_FRONTEND=noninteractive \
 		php-pgsql \
 		php-mysql \
 		php-mbstring \
+		php-json \
 		php-gmp \
 		php-soap \
 		php-intl \
@@ -86,8 +87,8 @@ RUN export DEBIAN_FRONTEND=noninteractive \
 COPY content/ /
 
 # Which module version to install
-ARG GITREF_INCUBATOR=v0.6.0
-ARG GITREF_DIRECTOR=v1.8.1
+ARG GITREF_INCUBATOR=v0.16.1
+ARG GITREF_DIRECTOR=v1.9.1
 ARG GITREF_MODGRAPHITE=v1.1.0
 ARG GITREF_MODAWS=v1.1.0
 ARG GITREF_BUSSINESS=v2.3.1
