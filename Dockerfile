@@ -54,6 +54,8 @@ RUN export DEBIAN_FRONTEND=noninteractive \
 		php-gmp \
 		php-soap \
 		php-intl \
+		php-xml \
+		php-xml-svg \
 		procps \
 		unzip \
 		wget \
