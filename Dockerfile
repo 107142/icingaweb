@@ -6,7 +6,7 @@ RUN printf "Running on ${BUILDPLATFORM:-linux/amd64}, building for ${TARGETPLATF
 # Basic info
 ARG NAME
 ARG BUILD_DATE
-ARG VERSION=2.10.1
+ARG VERSION=2.11.1
 ARG VCS_REF
 ARG VCS_URL
 
@@ -22,7 +22,7 @@ LABEL maintainer="Marek Jaroš <jaros@ics.muni.cz>" \
 	org.label-schema.schema-version="1.0"
 
 ENV CODENAME=bullseye
-ENV PACKAGE=2.10.1-1.${CODENAME}
+ENV PACKAGE=2.11.1-1.${CODENAME}
 ENV LANG=en_US.UTF-8 LANGUAGE=en_US:en
 ARG OPENID_CONNECT=2.4.11.2
 
@@ -87,7 +87,7 @@ RUN export DEBIAN_FRONTEND=noninteractive \
 COPY content/ /
 
 # Which module version to install
-ARG GITREF_INCUBATOR=v0.16.1
+ARG GITREF_INCUBATOR=v0.17.0
 ARG GITREF_DIRECTOR=v1.9.1
 ARG GITREF_MODGRAPHITE=v1.2.1
 ARG GITREF_MODAWS=v1.1.0
